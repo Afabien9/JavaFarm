@@ -1,27 +1,55 @@
 package main.java.model;
 
+import javafx.scene.paint.Color;
+
+/**
+ * Enumération des types d'animaux.
+ * Ajout des méthodes getProduct() et getFoodCost() réclamées par le compilateur.
+ */
 public enum AnimalType {
-    CHICKEN("Poule", 50, 5, "Oeuf", 10),
-    PIG("Cochon", 150, 15, "Viande", 40),
-    COW("Vache", 300, 25, "Lait", 70);
+    CHICKEN("Poule", 50, "Oeuf", 10, 5, 2, Color.WHITE),
+    COW("Vache", 200, "Lait", 20, 30, 10, Color.BLACK),
+    SHEEP("Mouton", 150, "Laine", 25, 20, 5, Color.LIGHTGRAY);
 
     private final String name;
     private final int buyPrice;
-    private final int foodCost;
-    private final String product;
+    private final String productName;
+    private final int productionTime;
     private final int productValue;
+    private final int foodCost; // Coût de nourriture par cycle de production
+    private final Color animalColor;
 
-    AnimalType(String name, int buyPrice, int foodCost, String product, int productValue) {
+    AnimalType(String name, int buyPrice, String productName, int productionTime, int productValue, int foodCost, Color animalColor) {
         this.name = name;
         this.buyPrice = buyPrice;
-        this.foodCost = foodCost;
-        this.product = product;
+        this.productName = productName;
+        this.productionTime = productionTime;
         this.productValue = productValue;
+        this.foodCost = foodCost;
+        this.animalColor = animalColor;
     }
 
     public String getName() { return name; }
     public int getBuyPrice() { return buyPrice; }
-    public int getFoodCost() { return foodCost; }
-    public String getProduct() { return product; }
+
+    /**
+     * Retourne le nom du produit (ex: "Oeuf").
+     * Le compilateur cherchait ce nom précis : getProduct().
+     */
+    public String getProduct() {
+        return productName;
+    }
+
+    public int getProductionTime() { return productionTime; }
     public int getProductValue() { return productValue; }
+
+    /**
+     * Retourne le coût en nourriture.
+     * Le compilateur cherchait ce nom précis : getFoodCost().
+     */
+    public int getFoodCost() {
+        return foodCost;
+    }
+
+    public Color getAnimalColor() { return animalColor; }
 }

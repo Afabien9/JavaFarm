@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * SERVICE CENTRAL COMPLET.
- * Ne supprime plus de méthodes à l'intérieur !
+ * Service central (Singleton).
+ * Correction : Ajout d'un anti-rebond pour éviter le double basculement du mode debug.
  */
 public class GameService {
     private static GameService instance;
@@ -16,9 +16,11 @@ public class GameService {
     private Inventory inventory;
     private Wallet wallet;
     private final List<Plot> allPlots = new ArrayList<>();
-
-    // Propriété réactive pour le Debug
+    private final List<Enclosure> allEnclosures = new ArrayList<>();
     private final BooleanProperty debugMode = new SimpleBooleanProperty(false);
+
+    // Variable pour empêcher le double déclenchement rapide
+    private long lastToggleTime = 0;
 
     private GameService() {
         this.inventory = new Inventory();
@@ -30,56 +32,111 @@ public class GameService {
         return instance;
     }
 
-    // --- LIAISON DONNÉES ---
-    public void setInventory(Inventory inventory) { this.inventory = inventory; }
-    public void setWallet(Wallet wallet) { this.wallet = wallet; }
-    public Inventory getInventory() { return inventory; }
+    public void setInventory(Inventory i) { this.inventory = i; }
+    public void setWallet(Wallet w) { this.wallet = w; }
     public Wallet getWallet() { return wallet; }
-    public List<Plot> getAllPlots() { return allPlots; }
+    public Inventory getInventory() { return inventory; }
 
-    // --- LOGIQUE DEBUG ---
-    public BooleanProperty debugModeProperty() { return debugMode; }
-    public boolean isDebugActive() { return debugMode.get(); }
-    public void toggleDebug() {
-        debugMode.set(!debugMode.get());
-        System.out.println("DEBUG : Mode " + (isDebugActive() ? "ON" : "OFF"));
+    /**
+     * Boutique : On garde wallet.spendMoney.
+     */
+    public boolean buy(Object selected) {
+        if (selected instanceof CropType) {
+            CropType type = (CropType) selected;
+            if (wallet.spendMoney(type.getBuyPrice())) {
+                inventory.addSeed(type, 1);
+                return true;
+            }
+        } else if (selected instanceof AnimalType) {
+            AnimalType type = (AnimalType) selected;
+            if (wallet.spendMoney(type.getBuyPrice())) {
+                inventory.addAnimal(type, 1);
+                return true;
+            }
+        }
+        return false;
     }
 
-    // --- LOGIQUE MÉTIER ---
-
+    /**
+     * Plantation : Utilise 1 seconde si le mode debug est actif.
+     */
     public void plantCrop(Plot plot, CropType type) {
         if (plot != null && type != null) {
+            // FIX DEBUG : Si debug actif, temps = 1s, sinon temps normal du type
+            int effectiveGrowthTime = isDebugActive() ? 1 : type.getGrowthTime();
+
             Crop newPlant = new Crop(
                     type.getName(),
                     type.getBuyPrice(),
                     (int)(type.getBuyPrice() * 1.5),
-                    type.getGrowthTime()
+                    effectiveGrowthTime
             );
+
             plot.plant(newPlant);
             if (!allPlots.contains(plot)) allPlots.add(plot);
         }
     }
 
-    /**
-     * RÉPARÉ : La méthode qui te manquait.
-     */
     public void harvestPlot(Plot plot) {
-        if (plot != null && plot.getState() == PlotState.READY && inventory != null) {
-            String cropName = plot.getCurrentCrop().getName();
-            CropType type = getCropTypeFromName(cropName);
+        if (plot != null && plot.getState() == PlotState.READY && plot.getCurrentCrop() != null) {
+            for (CropType type : CropType.values()) {
+                if (type.getName().equals(plot.getCurrentCrop().getName())) {
+                    inventory.addProduct(type, 1);
+                    break;
+                }
+            }
+            plot.harvest();
+        }
+    }
 
-            if (type != null) {
-                inventory.addProduct(type, 1);
-                plot.harvest();
-                System.out.println("RÉCOLTE : " + type.getName() + " ajouté à l'inventaire.");
+    /**
+     * Placement animal : Applique aussi le temps réduit si debug actif.
+     */
+    public void placeAnimalFromInventory(Enclosure enc, AnimalType type) {
+        if (enc != null && type != null) {
+            enc.addAnimal(type); // L'enclos doit vérifier GameService.getInstance().isDebugActive() pour son timer interne
+            if (!allEnclosures.contains(enc)) allEnclosures.add(enc);
+        }
+    }
+
+    public void collectFromEnclosure(Enclosure enc) {
+        if (enc != null && enc.getState() == PlotState.READY) {
+            AnimalType type = enc.getCurrentAnimal();
+            if (type != null && inventory != null) {
+                inventory.addAnimalProduct(type.getProduct(), 1);
+                enc.collectProduct();
             }
         }
     }
 
-    private CropType getCropTypeFromName(String name) {
-        for (CropType t : CropType.values()) {
-            if (t.getName().equalsIgnoreCase(name)) return t;
+    public void buyAnimal(Enclosure enc, AnimalType selectedAnimal) {
+        if (enc != null && selectedAnimal != null && enc.getState() == PlotState.EMPTY) {
+            if (wallet.spendMoney(selectedAnimal.getBuyPrice())) {
+                enc.addAnimal(selectedAnimal);
+                if (!allEnclosures.contains(enc)) allEnclosures.add(enc);
+            }
         }
-        return null;
     }
+
+    public BooleanProperty debugModeProperty() { return debugMode; }
+    public boolean isDebugActive() { return debugMode.get(); }
+
+    /**
+     * Bascule le mode debug avec une sécurité anti-rebond.
+     */
+    public void toggleDebug() {
+        long currentTime = System.currentTimeMillis();
+
+        // Si le dernier clic a eu lieu il y a moins de 300ms, on ignore
+        if (currentTime - lastToggleTime < 300) {
+            return;
+        }
+
+        lastToggleTime = currentTime;
+        debugMode.set(!debugMode.get());
+        System.out.println("Debug Mode: " + debugMode.get());
+    }
+
+    public List<Plot> getAllPlots() { return allPlots; }
+    public List<Enclosure> getAllEnclosures() { return allEnclosures; }
 }

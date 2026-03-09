@@ -1,91 +1,102 @@
 package main.java.controller;
 
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
 import main.java.model.*;
 import main.java.service.SelectionService;
 
+/**
+ * Contrôleur de la barre latérale.
+ * Gère l'affichage de l'inventaire (graines, animaux à placer, récoltes et produits animaux).
+ */
 public class SidebarController {
 
     @FXML private Label walletLabel;
     @FXML private Label weatherLabel;
     @FXML private ListView<String> inventoryListView;
+    @FXML private ToggleButton buildToggle;
 
     private MainController mainCtrl;
+    private Wallet wallet;
     private Inventory inventory;
-    private final ObservableList<String> inventoryItems = FXCollections.observableArrayList();
 
-    public void setMainController(MainController m) {
-        this.mainCtrl = m;
-    }
-
-    public void setupData(Wallet w, Inventory i) {
-        this.inventory = i;
-        if (walletLabel != null && w != null) {
-            walletLabel.textProperty().bind(w.moneyProperty().asString("Argent: %d €"));
-        }
-
+    @FXML
+    public void initialize() {
         if (inventoryListView != null) {
-            inventoryListView.setItems(inventoryItems);
-
-            // Écouteur pour la sélection de graines à planter
             inventoryListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal != null) {
-                    CropType type = getCropTypeFromText(newVal);
-                    SelectionService.getInstance().setSelectedCrop(type);
+                    handleSelection(newVal);
                 }
             });
         }
+    }
+
+    public void setupData(Wallet w, Inventory i) {
+        this.wallet = w;
+        this.inventory = i;
         updateInventoryDisplay();
     }
 
-    /**
-     * Cette méthode est celle que le FXML cherche (onAction="#handleSell")
-     */
-    @FXML
-    private void handleSell() {
-        if (mainCtrl != null) {
-            // On récupère l'élément sélectionné dans la liste
-            CropType selected = getSelectedCropFromList();
-            if (selected != null) {
-                // On demande au MainController de vendre 1 unité
-                mainCtrl.sellCrops(selected, 1);
-            } else {
-                System.out.println("INFO : Sélectionnez un produit dans l'inventaire pour le vendre.");
+    private void handleSelection(String text) {
+        if (text.startsWith("-")) return;
+
+        String name = text.split(" ")[0];
+
+        // Sélection de graines
+        for (CropType type : CropType.values()) {
+            if (type.getName().equalsIgnoreCase(name)) {
+                SelectionService.getInstance().setSelectedCrop(type);
+                SelectionService.getInstance().setSelectedAnimal(null);
+                return;
+            }
+        }
+
+        // Sélection d'animaux en stock
+        for (AnimalType type : AnimalType.values()) {
+            if (type.getName().equalsIgnoreCase(name)) {
+                SelectionService.getInstance().setSelectedAnimal(type);
+                SelectionService.getInstance().setSelectedCrop(null);
+                return;
             }
         }
     }
 
     /**
-     * Vend tout le stock (onAction="#sellAll")
+     * Rafraîchit la liste de l'inventaire avec toutes les catégories.
      */
-    @FXML
-    private void sellAll() {
-        if (mainCtrl != null && inventory != null) {
-            inventory.getProducts().keySet().forEach(type -> mainCtrl.sellCrops(type, -1));
+    public void updateInventoryDisplay() {
+        if (inventory == null) return;
+
+        ObservableList<String> items = FXCollections.observableArrayList();
+
+        // 1. GRAINES
+        items.add("--- GRAINES ---");
+        inventory.getSeeds().forEach((t, q) -> { if(q > 0) items.add(t.getName() + " (Stock: " + q + ")"); });
+
+        // 2. ANIMAUX À PLACER
+        items.add("--- ANIMAUX À PLACER ---");
+        inventory.getAnimals().forEach((t, q) -> { if(q > 0) items.add(t.getName() + " (Stock: " + q + ")"); });
+
+        // 3. RÉCOLTES VÉGÉTALES
+        items.add("--- RÉCOLTES (CHAMPS) ---");
+        inventory.getProducts().forEach((t, q) -> { if(q > 0) items.add(t.getName() + " (Prêt: " + q + ")"); });
+
+        // 4. PRODUITS ANIMAUX (Nouveau !)
+        items.add("--- PRODUITS ANIMAUX ---");
+        if (inventory.getAnimalProducts() != null) {
+            inventory.getAnimalProducts().forEach((productName, qty) -> {
+                if (qty > 0) items.add(productName + " (Qte: " + qty + ")");
+            });
         }
-    }
 
-    @FXML
-    private void handleOpenShop() {
-        if (mainCtrl != null) mainCtrl.openShop();
-    }
+        if (inventoryListView != null) {
+            inventoryListView.setItems(items);
+        }
 
-    @FXML
-    private void handleToggleBuild() {
-        if (mainCtrl != null) mainCtrl.toggleBuildMode();
-    }
-
-    /**
-     * Active ou désactive le mode debug via le bouton de la sidebar.
-     */
-    @FXML
-    public void handleOpenDebug(ActionEvent actionEvent) {
-        if (mainCtrl != null) {
-            mainCtrl.toggleDebugMode();
+        if (walletLabel != null && wallet != null) {
+            walletLabel.setText("Argent: " + wallet.getMoney() + " €");
         }
     }
 
@@ -95,29 +106,47 @@ public class SidebarController {
         }
     }
 
-    public void updateInventoryDisplay() {
-        inventoryItems.clear();
-        if (inventory != null) {
-            // Affichage des graines
-            inventory.getSeeds().forEach((type, qty) -> {
-                if (qty > 0) inventoryItems.add(type.getName() + " (Graines: " + qty + ")");
-            });
-            // Affichage des produits récoltés
-            inventory.getProducts().forEach((type, qty) -> {
-                if (qty > 0) inventoryItems.add(type.getName() + " (Récolte: " + qty + ")");
-            });
+    @FXML
+    private void handleModePlots() {
+        if (mainCtrl != null) mainCtrl.setStructureToBuild(MainController.StructureType.PLOT);
+    }
+
+    @FXML
+    private void handleModeEnclosures() {
+        if (mainCtrl != null) mainCtrl.setStructureToBuild(MainController.StructureType.ENCLOSURE);
+    }
+
+    @FXML
+    private void handleToggleBuild() {
+        if (mainCtrl != null) mainCtrl.toggleBuildMode();
+    }
+
+    @FXML
+    private void handleOpenShop() {
+        if (mainCtrl != null) mainCtrl.openShop();
+    }
+
+    @FXML
+    private void handleOpenDebug() {
+        if (mainCtrl != null) mainCtrl.toggleDebugMode();
+    }
+
+    /**
+     * Vend l'intégralité de l'inventaire.
+     */
+    @FXML
+    private void sellAll() {
+        if (mainCtrl != null) {
+            // Vente des plantes
+            for (CropType type : CropType.values()) {
+                mainCtrl.sellCrops(type, -1);
+            }
+            // Vente des produits animaux
+            mainCtrl.sellAnimalProducts();
         }
     }
 
-    private CropType getSelectedCropFromList() {
-        String selected = inventoryListView.getSelectionModel().getSelectedItem();
-        return (selected != null) ? getCropTypeFromText(selected) : null;
-    }
-
-    private CropType getCropTypeFromText(String text) {
-        if (text.contains("Blé")) return CropType.WHEAT;
-        if (text.contains("Maïs")) return CropType.CORN;
-        if (text.contains("Tomate")) return CropType.TOMATO;
-        return null;
+    public void setMainController(MainController m) {
+        this.mainCtrl = m;
     }
 }

@@ -15,26 +15,29 @@ import java.io.IOException;
 
 public class MainController {
 
+    /**
+     * DÉFINITION : L'énumération des types de structures.
+     */
+    public enum StructureType { PLOT, ENCLOSURE }
+
     @FXML private ScrollPane mapScroll;
     @FXML private Label statusLabel;
 
-    // ATTENTION : Ces noms doivent correspondre aux fx:id du FXML + "Controller"
     @FXML private SidebarController sidebarController;
     @FXML private MapController mapController;
 
     private final Wallet wallet = new Wallet();
     private final Inventory inventory = new Inventory();
+
     private boolean buildModeActive = false;
+    private StructureType activeStructureType = StructureType.PLOT; // Par défaut : Champs
 
     @FXML
     public void initialize() {
-        System.out.println("LOG : Initialisation du MainController...");
-
-        // On lie l'inventaire et le portefeuille au Service global
+        // Synchronisation des services
         GameService.getInstance().setInventory(this.inventory);
         GameService.getInstance().setWallet(this.wallet);
 
-        // Injection des données dans les sous-contrôleurs
         if (sidebarController != null) {
             sidebarController.setMainController(this);
             sidebarController.setupData(wallet, inventory);
@@ -44,57 +47,98 @@ public class MainController {
             mapController.setupData(wallet, inventory);
         }
 
-        // On donne le focus au scrollPane pour capter le clavier immédiatement
         javafx.application.Platform.runLater(() -> {
             if (mapScroll != null) mapScroll.requestFocus();
         });
     }
 
+    // --- GESTION DE LA CONSTRUCTION (Utilisé par MapController) ---
+
+    public void setStructureToBuild(StructureType type) {
+        this.activeStructureType = type;
+        if (statusLabel != null) {
+            statusLabel.setText("Construction : " + (type == StructureType.PLOT ? "CHAMPS" : "ENCLOS"));
+        }
+    }
+
     /**
-     * Gère les entrées clavier (Z,S,Q,D pour le scroll, M pour le Debug).
+     * Permet au MapController de savoir quoi construire.
      */
+    public StructureType getActiveStructureType() {
+        return activeStructureType;
+    }
+
+    public void toggleBuildMode() {
+        this.buildModeActive = !this.buildModeActive;
+        if (statusLabel != null) {
+            statusLabel.setText(buildModeActive ? "MODE CONSTRUCTION ACTIF" : "MODE INTERACTION");
+        }
+    }
+
+    public boolean isBuildModeActive() {
+        return buildModeActive;
+    }
+
+    // --- ACTIONS CLAVIER ---
+
     @FXML
     public void handleKeyPress(KeyEvent e) {
-        if (mapScroll == null) return;
-        double step = 0.1;
         switch (e.getCode()) {
-            case M:
-                toggleDebugMode();
-                break;
-            case Z: case UP:    mapScroll.setVvalue(mapScroll.getVvalue() - step); break;
-            case S: case DOWN:  mapScroll.setVvalue(mapScroll.getVvalue() + step); break;
-            case Q: case LEFT:  mapScroll.setHvalue(mapScroll.getHvalue() - step); break;
-            case D: case RIGHT: mapScroll.setHvalue(mapScroll.getHvalue() + step); break;
+            case M: toggleDebugMode(); break;
+            case B: toggleBuildMode(); break;
             default: break;
         }
     }
 
-    /**
-     * Met à jour l'affichage de la météo dans la sidebar.
-     * CETTE MÉTHODE ÉTAIT MANQUANTE ET CAUSAIT L'ERREUR.
-     */
-    public void updateWeatherUI(String weatherName) {
-        if (sidebarController != null) {
-            sidebarController.updateWeatherDisplay(weatherName);
+    // --- LOGIQUE DE VENTE ---
+
+    public void sellCrops(CropType type, int qty) {
+        if (type == null) return;
+        int stock = inventory.getProducts().getOrDefault(type, 0);
+        int amount = (qty == -1) ? stock : Math.min(qty, stock);
+        if (amount > 0 && inventory.useProduct(type, amount)) {
+            wallet.addMoney((int)(type.getBuyPrice() * 1.5) * amount);
+            refreshInventoryUI();
         }
     }
 
     /**
-     * Alterne le mode de croissance rapide (1s) via le GameService.
+     * Vend tous les produits animaux (Lait, Oeufs, Laine) présents dans l'inventaire.
      */
-    @FXML
+    public void sellAnimalProducts() {
+        if (inventory == null || wallet == null) return;
+
+        // On parcourt la map des produits récoltés
+        inventory.getAnimalProducts().forEach((productName, qty) -> {
+            if (qty > 0) {
+                // On identifie le prix de vente en cherchant l'AnimalType correspondant au produit
+                for (AnimalType type : AnimalType.values()) {
+                    if (type.getProduct().equalsIgnoreCase(productName)) {
+                        wallet.addMoney(type.getProductValue() * qty);
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Une fois vendu, on vide le stock de produits animaux
+        inventory.clearAnimalProducts();
+        refreshInventoryUI();
+    }
+
+    // --- AUTRES MÉTHODES ---
+
     public void toggleDebugMode() {
         GameService.getInstance().toggleDebug();
         boolean isActive = GameService.getInstance().isDebugActive();
 
         if (statusLabel != null) {
-            statusLabel.setText(isActive ? "MODE DEBUG : ACTIF (Croissance 1s)" : "MODE DEBUG : DÉSACTIVÉ");
+            statusLabel.setText(isActive ? "DEBUG : ACTIF (+1000€)" : "DEBUG : DÉSACTIVÉ");
         }
 
         if (isActive) {
-            wallet.addMoney(500); // Petit bonus de test
+            wallet.addMoney(1000);
         }
-
         refreshInventoryUI();
     }
 
@@ -104,47 +148,21 @@ public class MainController {
             Parent root = loader.load();
             ShopController shopCtrl = loader.getController();
             shopCtrl.setData(wallet, inventory, this);
-
             Stage stage = new Stage();
             stage.setTitle("Boutique");
             stage.setScene(new Scene(root));
             stage.show();
-        } catch (IOException e) {
-            System.err.println("Erreur boutique : " + e.getMessage());
-        }
-    }
-
-    public void sellCrops(CropType type, int amount) {
-        if (type == null) return;
-        int stock = inventory.getProducts().getOrDefault(type, 0);
-        int qty = (amount == -1) ? stock : Math.min(amount, stock);
-
-        if (qty > 0 && inventory.useProduct(type, qty)) {
-            int gain = (int) (qty * type.getBuyPrice() * 1.5);
-            wallet.addMoney(gain);
-            refreshInventoryUI();
-        }
-    }
-
-    public void toggleBuildMode() {
-        this.buildModeActive = !this.buildModeActive;
-        System.out.println("Mode construction : " + (buildModeActive ? "ON" : "OFF"));
-    }
-
-    public boolean isBuildModeActive() {
-        return buildModeActive;
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
     public void refreshInventoryUI() {
         if (sidebarController != null) sidebarController.updateInventoryDisplay();
     }
 
-    /**
-     * Ferme l'application proprement.
-     */
-    @FXML
-    public void handleExit(ActionEvent event) {
-        System.out.println("Fermeture du jeu...");
-        System.exit(0);
+    public void updateWeatherUI(String w) {
+        if (sidebarController != null) sidebarController.updateWeatherDisplay(w);
     }
+
+    @FXML
+    public void handleExit(ActionEvent event) { System.exit(0); }
 }
