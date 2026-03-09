@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox fx:id="sidebarRoot" spacing="15" prefWidth="250"
+      style="-fx-background-color: #3e3e3e; -fx-border-color: #2a2a2a; -fx-border-width: 0 0 0 2;"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="main.java.controller.SidebarController">
+
+    <padding>
+        <Insets top="20" right="15" bottom="20" left="15"/>
+    </padding>
+
+    <VBox spacing="5" style="-fx-background-color: #4a4a4a; -fx-padding: 10; -fx-background-radius: 5;">
+        <Label fx:id="walletLabel" text="Argent: 0 €"
+               style="-fx-text-fill: #98fb98; -fx-font-weight: bold; -fx-font-size: 16;"/>
+        <Label fx:id="weatherLabel" text="MÉTÉO : SOLEIL"
+               style="-fx-text-fill: white; -fx-font-size: 12;"/>
+    </VBox>
+
+    <Separator />
+
+    <Label text="INVENTAIRE" style="-fx-text-fill: lightgray; -fx-font-weight: bold;"/>
+    <ListView fx:id="inventoryListView" VBox.vgrow="ALWAYS"
+              style="-fx-background-color: #2b2b2b; -fx-control-inner-background: #2b2b2b; -fx-text-fill: white;"/>
+
+    <Separator />
+
+    <VBox spacing="10" alignment="CENTER">
+        <Button text="OUVRIR BOUTIQUE" onAction="#handleOpenShop" maxWidth="Infinity"
+                style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+
+        <Button text="VENDRE SÉLECTION" onAction="#handleSell" maxWidth="Infinity"
+                style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+
+        <Button text="TOUT VENDRE" onAction="#sellAll" maxWidth="Infinity"
+                style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+    </VBox>
+
+    <Separator />
+
+    <VBox spacing="10">
+        <ToggleButton text="MODE CONSTRUCTION" onAction="#handleToggleBuild" maxWidth="Infinity"
+                      style="-fx-cursor: hand;"/>
+        <Button text="PANNEAU DEBUG" onAction="#handleOpenDebug" maxWidth="Infinity"
+                style="-fx-background-color: #7f8c8d; -fx-text-fill: white; -fx-cursor: hand;"/>
+    </VBox>
+
+</VBox>

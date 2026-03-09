@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.Pane?>
+
+<Pane fx:id="mapPane"
+      prefWidth="2000" prefHeight="2000"
+      style="-fx-background-color: #2ecc71;"
+      onMouseClicked="#handleLocalMapClick"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="main.java.controller.MapController">
+</Pane>

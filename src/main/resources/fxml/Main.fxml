@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns="http://javafx.com/javafx/8"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="main.java.controller.MainController"
+      onKeyPressed="#handleKeyPress"
+      focusTraversable="true"
+      prefHeight="750.0" prefWidth="1100.0"
+      stylesheets="@../css/style.css">
+
+    <MenuBar>
+        <Menu text="Jeu">
+            <MenuItem text="Boutique" onAction="#openShop"/>
+            <SeparatorMenuItem />
+            <MenuItem text="Quitter" onAction="#handleExit"/>
+        </Menu>
+        <Menu text="Debug">
+            <MenuItem text="Activer/Désactiver (M)" onAction="#toggleDebugMode"/>
+        </Menu>
+    </MenuBar>
+
+    <HBox VBox.vgrow="ALWAYS">
+        <!-- Conteneur de la Sidebar avec largeur fixée pour plus de stabilité -->
+        <AnchorPane minWidth="280.0" prefWidth="280.0" style="-fx-background-color: #2c3e50;">
+            <fx:include fx:id="sidebar" source="SidebarView.fxml"
+                        AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0"
+                        AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+        </AnchorPane>
+
+        <!-- Zone de la Carte -->
+        <ScrollPane fx:id="mapScroll" HBox.hgrow="ALWAYS" fitToHeight="true" fitToWidth="true"
+                    style="-fx-background-color: #1e1e1e; -fx-border-color: #333; -fx-border-width: 0 0 0 2;">
+            <fx:include fx:id="map" source="MapView.fxml" />
+        </ScrollPane>
+    </HBox>
+
+    <HBox fx:id="statusBar" spacing="10" style="-fx-padding: 8; -fx-background-color: #ecf0f1; -fx-border-color: #bdc3c7; -fx-border-width: 1 0 0 0;">
+        <Label fx:id="statusLabel" text="Prêt à cultiver !" style="-fx-font-weight: bold;"/>
+    </HBox>
+
+</VBox>

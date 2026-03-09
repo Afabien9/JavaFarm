@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10" alignment="CENTER" prefWidth="300" prefHeight="400"
+      xmlns:fx="http://javafx.com/fxml" fx:controller="main.java.controller.ShopController"
+      style="-fx-padding: 20; -fx-background-color: #f4f4f4;">
+    <TabPane>
+        <tabs>
+            <Tab text="Graines" closable="false">
+                <VBox spacing="10">
+                    <ListView fx:id="shopListView" />
+                    <Button text="Acheter Graine" onAction="#handleBuy" />
+                </VBox>
+            </Tab>
+
+            <Tab text="Terrain" closable="false">
+                <VBox spacing="10" alignment="CENTER">
+                    <Label text="Acheter une nouvelle parcelle" />
+                    <Label text="Prix : 500 €" style="-fx-font-weight: bold;" /> <Button text="Acheter Terrain" onAction="#handleBuyPlot"
+                                                                                         style="-fx-background-color: #8b4513; -fx-text-fill: white;" />
+                </VBox>
+            </Tab>
+        </tabs>
+    </TabPane>
+
+    <Label text="BOUTIQUE DE GRAINES" style="-fx-font-weight: bold; -fx-font-size: 18;"/>
+    <Label fx:id="shopWalletLabel" text="Mon argent: 0 €" />
+
+    <Button text="Acheter la graine sélectionnée" onAction="#handleBuy"
+            style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+</VBox>
