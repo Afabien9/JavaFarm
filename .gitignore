@@ -28,6 +28,7 @@ bin/
 
 ### Mac OS ###
 .DS_Storelibs/libjfxwebkit.dylib
+.DS_Store
 libs/libjfxwebkit.dylib
 libs/libjfxwebkit.dylib
 libs/libjfxwebkit.dylib
