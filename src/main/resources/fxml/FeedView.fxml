@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10" alignment="CENTER" prefWidth="250" prefHeight="150"
+      xmlns:fx="http://javafx.com/fxml" fx:controller="main.java.controller.FeedController"
+      style="-fx-padding: 20; -fx-background-color: #ecf0f1; -fx-border-color: #bdc3c7;">
+
+    <Label fx:id="infoLabel" text="Sélectionnez un animal" style="-fx-font-weight: bold;"/>
+    <Button text="Donner à manger" onAction="#handleFeed"
+            style="-fx-background-color: #e67e22; -fx-text-fill: white;"/>
+</VBox>

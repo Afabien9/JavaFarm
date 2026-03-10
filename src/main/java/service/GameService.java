@@ -6,10 +6,6 @@ import main.java.model.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Service central (Singleton).
- * Correction : Ajout d'un anti-rebond pour éviter le double basculement du mode debug.
- */
 public class GameService {
     private static GameService instance;
 
@@ -139,4 +135,30 @@ public class GameService {
 
     public List<Plot> getAllPlots() { return allPlots; }
     public List<Enclosure> getAllEnclosures() { return allEnclosures; }
+
+    public void harvestCrop(Plot plot) {
+        // 1. Vérification : la parcelle doit être prête et contenir une plante
+        if (plot != null && plot.getState() == PlotState.READY && plot.getCurrentCrop() != null) {
+
+            String cropName = plot.getCurrentCrop().getName();
+            CropType harvestedType = null;
+
+            // 2. Identification du CropType correspondant au nom de la plante
+            for (CropType type : CropType.values()) {
+                if (type.getName().equals(cropName)) {
+                    harvestedType = type;
+                    break;
+                }
+            }
+
+            // 3. Ajout du produit à l'inventaire si le type est trouvé
+            if (harvestedType != null) {
+                inventory.addProduct(harvestedType, 1);
+                System.out.println("LOG : Récolte de " + harvestedType.getName() + " ajoutée à l'inventaire.");
+            }
+
+            // 4. Réinitialisation de la parcelle (repasse en état EMPTY)
+            plot.harvest();
+        }
+    }
 }

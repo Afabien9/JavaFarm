@@ -1,23 +1,31 @@
 package main.java.controller;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.Color;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import main.java.model.*;
 import main.java.service.GameService;
 import main.java.service.SelectionService;
 
-/**
- * Gère l'affichage de la ferme et les interactions avec les parcelles et les enclos.
- */
+import java.io.IOException;
+
 public class MapController {
 
     @FXML private Pane mapPane;
 
     private MainController mainController;
     private Inventory inventory;
+
+    private final int CELL_SIZE = 80;
+    private final int GAP = 2;
+    private final int GRID_STEP = CELL_SIZE + GAP;
 
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
@@ -27,13 +35,9 @@ public class MapController {
         this.inventory = inventory;
     }
 
-    /**
-     * Gère le clic sur le fond de la carte pour construire des structures.
-     */
     @FXML
     private void handleLocalMapClick(MouseEvent event) {
         if (mainController != null && mainController.isBuildModeActive()) {
-            // On vérifie quel type de structure est actif dans le mode construction
             if (mainController.getActiveStructureType() == MainController.StructureType.PLOT) {
                 placeNewPlot(event.getX(), event.getY());
             } else if (mainController.getActiveStructureType() == MainController.StructureType.ENCLOSURE) {
@@ -42,80 +46,80 @@ public class MapController {
         }
     }
 
-    // --- LOGIQUE DES CULTURES (PLOTS) ---
-
     public void placeNewPlot(double x, double y) {
-        if (mapPane == null) return;
-
-        double gridX = Math.floor(x / 64) * 64;
-        double gridY = Math.floor(y / 64) * 64;
+        double snapX = Math.floor(x / GRID_STEP) * GRID_STEP;
+        double snapY = Math.floor(y / GRID_STEP) * GRID_STEP;
 
         Plot plotModel = new Plot(false);
-        Rectangle rect = new Rectangle(gridX, gridY, 62, 62);
-        rect.setFill(Color.web("#8b4513")); // Marron terre
-        rect.setStroke(Color.web("#5d2e0d"));
-        rect.setStrokeWidth(1);
+        Rectangle rect = new Rectangle(CELL_SIZE, CELL_SIZE, Color.BROWN);
+        rect.setX(snapX);
+        rect.setY(snapY);
+        rect.setStroke(Color.BLACK);
 
         rect.setOnMouseClicked(event -> {
-            if (mainController != null && !mainController.isBuildModeActive()) {
+            if (!mainController.isBuildModeActive()) {
                 handlePlotInteraction(plotModel, rect);
                 event.consume();
             }
         });
 
-        plotModel.stateProperty().addListener((obs, oldState, newState) -> {
-            updatePlotVisual(plotModel, rect, newState);
+        plotModel.growthStageProperty().addListener((obs, oldStage, newStage) -> {
+            updatePlotVisual(plotModel, rect, newStage.intValue());
         });
 
         mapPane.getChildren().add(rect);
     }
 
     private void handlePlotInteraction(Plot plot, Rectangle rect) {
-        if (this.inventory == null) return;
-
-        CropType selected = SelectionService.getInstance().getSelectedCrop();
-
         if (plot.getState() == PlotState.EMPTY) {
-            if (selected != null && inventory.useSeed(selected)) {
+            CropType selected = SelectionService.getInstance().getSelectedCrop();
+            if (selected != null) {
                 GameService.getInstance().plantCrop(plot, selected);
+                // FORCE le changement de couleur instantané en bleu (stade 0)
+                updatePlotVisual(plot, rect, 0);
                 mainController.refreshInventoryUI();
             }
         } else if (plot.getState() == PlotState.READY) {
-            GameService.getInstance().harvestPlot(plot);
+            GameService.getInstance().harvestCrop(plot);
             mainController.refreshInventoryUI();
         }
     }
 
-    private void updatePlotVisual(Plot plot, Rectangle rect, PlotState state) {
-        switch (state) {
-            case EMPTY: rect.setFill(Color.web("#8b4513")); break;
-            case GROWING: rect.setFill(Color.web("#27ae60")); break;
-            case READY:
+    private void updatePlotVisual(Plot plot, Rectangle rect, int stage) {
+        if (plot.getState() == PlotState.EMPTY) {
+            rect.setFill(Color.BROWN);
+            return;
+        }
+
+        switch (stage) {
+            case 0:
+                rect.setFill(Color.CORNFLOWERBLUE); // BLEU INSTANTANÉ
+                break;
+            case 1:
+                rect.setFill(Color.LIMEGREEN);
+                break;
+            case 2:
                 if (plot.getCurrentCrop() != null) rect.setFill(plot.getCurrentCrop().getReadyColor());
                 else rect.setFill(Color.GOLD);
                 break;
         }
     }
 
-    // --- LOGIQUE DES ANIMAUX (ENCLOSURES) ---
-
-    /**
-     * Place un nouvel enclos sur la grille.
-     */
     public void placeNewEnclosure(double x, double y) {
-        if (mapPane == null) return;
-
-        double gridX = Math.floor(x / 64) * 64;
-        double gridY = Math.floor(y / 64) * 64;
+        double snapX = Math.floor(x / GRID_STEP) * GRID_STEP;
+        double snapY = Math.floor(y / GRID_STEP) * GRID_STEP;
 
         Enclosure enclosureModel = new Enclosure();
-        Rectangle rect = new Rectangle(gridX, gridY, 62, 62);
-        rect.setFill(Color.web("#7f8c8d")); // Gris (Vide)
+        Rectangle rect = new Rectangle(CELL_SIZE, CELL_SIZE, Color.web("#bdc3c7"));
+        rect.setX(snapX);
+        rect.setY(snapY);
+        rect.setArcWidth(15);
+        rect.setArcHeight(15);
         rect.setStroke(Color.web("#2c3e50"));
-        rect.setStrokeWidth(3);
+        rect.setStrokeWidth(2);
 
         rect.setOnMouseClicked(event -> {
-            if (mainController != null && !mainController.isBuildModeActive()) {
+            if (!mainController.isBuildModeActive()) {
                 handleEnclosureInteraction(enclosureModel, rect);
                 event.consume();
             }
@@ -123,21 +127,19 @@ public class MapController {
 
         enclosureModel.stateProperty().addListener((obs, old, newState) -> {
             if (newState == PlotState.READY) {
-                rect.setStroke(Color.YELLOW); // Brille quand le produit est prêt
+                rect.setStroke(Color.YELLOW);
+                rect.setStrokeWidth(4);
             } else {
                 rect.setStroke(Color.web("#2c3e50"));
+                rect.setStrokeWidth(2);
             }
         });
 
         mapPane.getChildren().add(rect);
     }
 
-    /**
-     * Gère l'achat d'animal ou la collecte de produit.
-     */
     private void handleEnclosureInteraction(Enclosure enc, Rectangle rect) {
         if (enc.getState() == PlotState.EMPTY) {
-            // On récupère l'animal sélectionné (On utilise le même service de sélection pour simplifier)
             AnimalType selectedAnimal = SelectionService.getInstance().getSelectedAnimal();
             if (selectedAnimal != null) {
                 GameService.getInstance().buyAnimal(enc, selectedAnimal);
@@ -145,12 +147,29 @@ public class MapController {
                     rect.setFill(selectedAnimal.getAnimalColor());
                     mainController.refreshInventoryUI();
                 }
-            } else {
-                System.out.println("Veuillez sélectionner un animal dans la barre latérale.");
             }
         } else if (enc.getState() == PlotState.READY) {
             GameService.getInstance().collectFromEnclosure(enc);
             mainController.refreshInventoryUI();
+        } else {
+            openFeedingWindow(enc);
         }
+    }
+
+    private void openFeedingWindow(Enclosure enc) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/AnimalInteractionView.fxml"));
+            Parent root = loader.load();
+            AnimalInteractionController ctrl = loader.getController();
+            ctrl.setEnclosure(enc);
+
+            Stage stage = new Stage();
+            stage.setTitle("Nourrir l'animal");
+            stage.setScene(new Scene(root));
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.showAndWait();
+
+            mainController.refreshInventoryUI();
+        } catch (IOException e) { e.printStackTrace(); }
     }
 }

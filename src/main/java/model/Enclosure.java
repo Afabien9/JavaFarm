@@ -8,31 +8,30 @@ import main.java.service.GameService;
 
 public class Enclosure {
     private final ObjectProperty<PlotState> state = new SimpleObjectProperty<>(PlotState.EMPTY);
+    private final BooleanProperty isHungry = new SimpleBooleanProperty(false); // Nouvel état
     private AnimalType currentAnimal;
     private Timeline productionTimeline;
-
-    public Enclosure() {
-        // Écouteur Debug : si actif, on finit la production en 1s
-        GameService.getInstance().debugModeProperty().addListener((obs, old, newVal) -> {
-            if (newVal && state.get() == PlotState.GROWING) {
-                startTimer(1.0);
-            }
-        });
-    }
 
     public void addAnimal(AnimalType type) {
         if (state.get() != PlotState.EMPTY) return;
         this.currentAnimal = type;
-        this.state.set(PlotState.GROWING); // GROWING signifie ici "En production"
-
-        double time = GameService.getInstance().isDebugActive() ? 1.0 : type.getProductionTime();
-        startTimer(time);
+        this.isHungry.set(true); // L'animal arrive avec faim
+        this.state.set(PlotState.GROWING); // État "En attente"
     }
 
-    private void startTimer(double seconds) {
+    /**
+     * Cette méthode remplace le démarrage automatique.
+     * Elle est appelée uniquement par le service de nourrissage.
+     */
+    public void startProductionAfterFeeding() {
+        if (currentAnimal == null) return;
+
+        isHungry.set(false);
+        double time = GameService.getInstance().isDebugActive() ? 1.0 : currentAnimal.getProductionTime();
+
         if (productionTimeline != null) productionTimeline.stop();
         productionTimeline = new Timeline(new KeyFrame(
-                Duration.seconds(seconds),
+                Duration.seconds(time),
                 event -> state.set(PlotState.READY)
         ));
         productionTimeline.play();
@@ -40,14 +39,14 @@ public class Enclosure {
 
     public void collectProduct() {
         if (state.get() == PlotState.READY) {
-            // Contrairement au Plot, l'animal reste ! On relance juste la production
             state.set(PlotState.GROWING);
-            double time = GameService.getInstance().isDebugActive() ? 1.0 : currentAnimal.getProductionTime();
-            startTimer(time);
+            isHungry.set(true); // Redevient affamé après la récolte
+            // ON NE RELANCE PAS LE TIMER ICI
         }
     }
 
+    public AnimalType getCurrentAnimal() { return currentAnimal; }
     public PlotState getState() { return state.get(); }
     public ObjectProperty<PlotState> stateProperty() { return state; }
-    public AnimalType getCurrentAnimal() { return currentAnimal; }
+    public BooleanProperty isHungryProperty() { return isHungry; }
 }
