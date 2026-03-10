@@ -1,29 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox spacing="20" alignment="TOP_CENTER" prefWidth="450" prefHeight="550"
-      style="-fx-background-color: #f5e6b5; -fx-border-color: #3e2723; -fx-border-width: 6; -fx-background-radius: 35; -fx-border-radius: 30; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 8);"
-      xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.java.controller.InventoryController">
+<VBox spacing="15" alignment="TOP_CENTER" prefWidth="500" prefHeight="400"
+      style="-fx-background-color: #2c3e50; -fx-border-color: #f1c40f; -fx-border-width: 3; -fx-background-radius: 15; -fx-border-radius: 15;"
+      xmlns:fx="http://javafx.com/fxml" fx:controller="main.java.controller.InventoryController">
 
-    <padding><Insets top="30" right="30" bottom="30" left="30"/></padding>
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
 
-    <VBox alignment="CENTER" spacing="5">
-        <Label text="MA GRANGE" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #3e2723;"/>
-        <Label text="Gestion des stocks" style="-fx-text-fill: #8d6e63; -fx-font-style: italic;"/>
-    </VBox>
+    <Label text="📦 MA GRANGE" style="-fx-text-fill: #f1c40f; -fx-font-size: 26; -fx-font-weight: bold;"/>
 
-    <ListView fx:id="inventoryListView" VBox.vgrow="ALWAYS"
-              style="-fx-background-color: rgba(255,255,255,0.3); -fx-background-radius: 15; -fx-border-color: #d7ccc8; -fx-border-width: 2;"/>
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent;">
+        <FlowPane fx:id="itemsGrid" hgap="15" vgap="15" alignment="TOP_CENTER" style="-fx-background-color: transparent;">
+            <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+        </FlowPane>
+    </ScrollPane>
 
-    <HBox spacing="20" alignment="CENTER">
-        <Button text="💰 TOUT VENDRE" onAction="#handleSellAll"
-                HBox.hgrow="ALWAYS" maxWidth="Infinity" styleClass="btn-sell"
-                style="-fx-font-size: 16; -fx-padding: 12;"/>
-
-        <Button text="RETOUR" onAction="#handleClose"
-                HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-weight: bold;"/>
-    </HBox>
+    <Button text="FERMER" onAction="#handleClose" prefWidth="150"
+            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
 </VBox>

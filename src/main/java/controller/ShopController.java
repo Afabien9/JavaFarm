@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import main.java.model.*;
 import main.java.service.GameService;
+import main.java.service.LevelService;
 
 public class ShopController {
     @FXML private ListView<CropType> seedsListView;
@@ -27,14 +28,30 @@ public class ShopController {
     private void setupSeedsList() {
         if (seedsListView == null) return;
         seedsListView.getItems().setAll(CropType.values());
+
+        // Récupère le niveau actuel du joueur
+        int currentLevel = LevelService.getInstance().getCurrentLevel();
+
         seedsListView.setCellFactory(lv -> new ListCell<CropType>() {
             @Override
             protected void updateItem(CropType item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
+                    setDisable(false);
+                    setStyle("");
                 } else {
-                    setText(getCropEmoji(item.getName()) + " " + item.getName() + " (" + item.getBuyPrice() + " €)");
+                    boolean isLocked = currentLevel < item.getMinLevel();
+
+                    if (isLocked) {
+                        setText("🔒 " + item.getName() + " [NIV. " + item.getMinLevel() + " REQUIS]");
+                        setDisable(true); // Empêche la sélection
+                        setStyle("-fx-text-fill: #7f8c8d; -fx-font-style: italic;"); // Apparence grisée
+                    } else {
+                        setText(getCropEmoji(item.getName()) + " " + item.getName() + " (" + item.getBuyPrice() + " €)");
+                        setDisable(false);
+                        setStyle("-fx-text-fill: #2c3e50; -fx-font-weight: bold;");
+                    }
                 }
             }
         });
@@ -43,6 +60,8 @@ public class ShopController {
     private void setupAnimalsList() {
         if (animalsListView == null) return;
         animalsListView.getItems().setAll(AnimalType.values());
+
+        // On pourrait aussi ajouter des niveaux aux animaux plus tard
         animalsListView.setCellFactory(lv -> new ListCell<AnimalType>() {
             @Override
             protected void updateItem(AnimalType item, boolean empty) {
@@ -62,6 +81,7 @@ public class ShopController {
         if (name.contains("maïs")) return "🌽";
         if (name.contains("carotte")) return "🥕";
         if (name.contains("tomate")) return "🍅";
+        if (name.contains("chou")) return "🥬";
         return "🌱";
     }
 
@@ -76,28 +96,29 @@ public class ShopController {
 
     @FXML
     public void handleBuy(ActionEvent event) {
-        // On vérifie d'abord l'onglet des graines, puis celui des animaux
         Object selected = seedsListView.getSelectionModel().getSelectedItem();
         if (selected == null) {
             selected = animalsListView.getSelectionModel().getSelectedItem();
         }
 
-        if (selected != null && GameService.getInstance().buy(selected)) {
-            mainCtrl.refreshInventoryUI();
+        if (selected != null) {
+            // Sécurité supplémentaire : On vérifie le niveau avant d'appeler le GameService
+            if (selected instanceof CropType) {
+                CropType crop = (CropType) selected;
+                if (LevelService.getInstance().getCurrentLevel() < crop.getMinLevel()) {
+                    System.out.println("Niveau insuffisant !");
+                    return;
+                }
+            }
+
+            if (GameService.getInstance().buy(selected)) {
+                mainCtrl.refreshInventoryUI();
+            }
         }
     }
 
-    @FXML
-    public void handleBuyPlot() {
-        // Logique pour l'onglet Terrain
-        System.out.println("Achat terrain demandé via l'interface");
-    }
-
-    @FXML
-    public void handleBuyBonus() {
-        // Méthode prévue pour ton futur onglet Bonus
-        System.out.println("Achat Bonus (Bientôt disponible)");
-    }
+    @FXML public void handleBuyPlot() { System.out.println("Achat terrain demandé"); }
+    @FXML public void handleBuyBonus() { System.out.println("Achat Bonus (Bientôt)"); }
 
     @FXML
     public void handleCloseShop() {

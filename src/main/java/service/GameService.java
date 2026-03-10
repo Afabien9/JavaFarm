@@ -14,14 +14,12 @@ public class GameService {
     private final List<Plot> allPlots = new ArrayList<>();
     private final List<Enclosure> allEnclosures = new ArrayList<>();
     private final BooleanProperty debugMode = new SimpleBooleanProperty(false);
-
-    // Variable pour empêcher le double déclenchement rapide
     private long lastToggleTime = 0;
 
-    private GameService() {
-        this.inventory = new Inventory();
-        this.wallet = new Wallet();
-    }
+    private final int PLOT_PRICE = 50;
+    private final int ENCLOSURE_PRICE = 150;
+
+    private GameService() {}
 
     public static GameService getInstance() {
         if (instance == null) instance = new GameService();
@@ -33,9 +31,9 @@ public class GameService {
     public Wallet getWallet() { return wallet; }
     public Inventory getInventory() { return inventory; }
 
-    /**
-     * Boutique : On garde wallet.spendMoney.
-     */
+    public int getPlotPrice() { return PLOT_PRICE; }
+    public int getEnclosurePrice() { return ENCLOSURE_PRICE; }
+
     public boolean buy(Object selected) {
         if (selected instanceof CropType) {
             CropType type = (CropType) selected;
@@ -53,45 +51,34 @@ public class GameService {
         return false;
     }
 
-    /**
-     * Plantation : Utilise 1 seconde si le mode debug est actif.
-     */
+    public void refundStructure(boolean isPlot) {
+        int refund = isPlot ? PLOT_PRICE / 2 : ENCLOSURE_PRICE / 2;
+        if (wallet != null) {
+            wallet.addMoney(refund);
+            System.out.println("[ECONOMY] Remboursement de " + refund + " € (Destruction).");
+        }
+    }
+
     public void plantCrop(Plot plot, CropType type) {
         if (plot != null && type != null) {
-            // FIX DEBUG : Si debug actif, temps = 1s, sinon temps normal du type
-            int effectiveGrowthTime = isDebugActive() ? 1 : type.getGrowthTime();
-
-            Crop newPlant = new Crop(
-                    type.getName(),
-                    type.getBuyPrice(),
-                    (int)(type.getBuyPrice() * 1.5),
-                    effectiveGrowthTime
-            );
-
-            plot.plant(newPlant.getType());
+            plot.plant(type);
             if (!allPlots.contains(plot)) allPlots.add(plot);
         }
     }
 
     public void harvestPlot(Plot plot) {
-        if (plot != null && plot.getState() == PlotState.READY && plot.getCurrentCrop() != null) {
-            for (CropType type : CropType.values()) {
-                if (type.getName().equals(plot.getCurrentCrop().getName())) {
-                    inventory.addProduct(type, 1);
-                    break;
-                }
-            }
-            plot.harvest();
-        }
+        this.harvestCrop(plot);
     }
 
-    /**
-     * Placement animal : Applique aussi le temps réduit si debug actif.
-     */
-    public void placeAnimalFromInventory(Enclosure enc, AnimalType type) {
-        if (enc != null && type != null) {
-            enc.addAnimal(type); // L'enclos doit vérifier GameService.getInstance().isDebugActive() pour son timer interne
-            if (!allEnclosures.contains(enc)) allEnclosures.add(enc);
+    public void harvestCrop(Plot plot) {
+        if (plot != null && plot.getState() == PlotState.READY && plot.getCurrentCrop() != null) {
+            CropType type = plot.getCurrentCrop().getType();
+            if (inventory != null) {
+                inventory.addProduct(type, 1);
+                LevelService.getInstance().addXP(20);
+                System.out.println("[GAME] Récolte de " + type.getName() + " effectuée. +20 XP");
+            }
+            plot.harvest();
         }
     }
 
@@ -100,65 +87,23 @@ public class GameService {
             AnimalType type = enc.getCurrentAnimal();
             if (type != null && inventory != null) {
                 inventory.addAnimalProduct(type.getProduct(), 1);
+                LevelService.getInstance().addXP(40);
+                System.out.println("[GAME] Collecte Animale (" + type.getName() + ") effectuée. +40 XP");
                 enc.collectProduct();
             }
         }
     }
 
-    public void buyAnimal(Enclosure enc, AnimalType selectedAnimal) {
-        if (enc != null && selectedAnimal != null && enc.getState() == PlotState.EMPTY) {
-            if (wallet.spendMoney(selectedAnimal.getBuyPrice())) {
-                enc.addAnimal(selectedAnimal);
-                if (!allEnclosures.contains(enc)) allEnclosures.add(enc);
-            }
-        }
+    public void toggleDebug() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastToggleTime < 300) return;
+        lastToggleTime = currentTime;
+        debugMode.set(!debugMode.get());
+        System.out.println("[DEBUG] Mode Debug : " + debugMode.get());
     }
 
     public BooleanProperty debugModeProperty() { return debugMode; }
     public boolean isDebugActive() { return debugMode.get(); }
-
-    /**
-     * Bascule le mode debug avec une sécurité anti-rebond.
-     */
-    public void toggleDebug() {
-        long currentTime = System.currentTimeMillis();
-
-        // Si le dernier clic a eu lieu il y a moins de 300ms, on ignore
-        if (currentTime - lastToggleTime < 300) {
-            return;
-        }
-
-        lastToggleTime = currentTime;
-        debugMode.set(!debugMode.get());
-        System.out.println("Debug Mode: " + debugMode.get());
-    }
-
     public List<Plot> getAllPlots() { return allPlots; }
     public List<Enclosure> getAllEnclosures() { return allEnclosures; }
-
-    public void harvestCrop(Plot plot) {
-        // 1. Vérification : la parcelle doit être prête et contenir une plante
-        if (plot != null && plot.getState() == PlotState.READY && plot.getCurrentCrop() != null) {
-
-            String cropName = plot.getCurrentCrop().getName();
-            CropType harvestedType = null;
-
-            // 2. Identification du CropType correspondant au nom de la plante
-            for (CropType type : CropType.values()) {
-                if (type.getName().equals(cropName)) {
-                    harvestedType = type;
-                    break;
-                }
-            }
-
-            // 3. Ajout du produit à l'inventaire si le type est trouvé
-            if (harvestedType != null) {
-                inventory.addProduct(harvestedType, 1);
-                System.out.println("LOG : Récolte de " + harvestedType.getName() + " ajoutée à l'inventaire.");
-            }
-
-            // 4. Réinitialisation de la parcelle (repasse en état EMPTY)
-            plot.harvest();
-        }
-    }
 }
