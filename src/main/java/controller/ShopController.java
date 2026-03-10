@@ -6,19 +6,13 @@ import javafx.scene.control.*;
 import main.java.model.*;
 import main.java.service.GameService;
 
-/**
- * Contrôleur de la boutique.
- * Gère l'interface d'achat et délègue la logique au GameService.
- */
 public class ShopController {
-    @FXML private ListView<Object> shopListView;
+    @FXML private ListView<CropType> seedsListView;
+    @FXML private ListView<AnimalType> animalsListView;
     @FXML private Label shopWalletLabel;
 
     private MainController mainCtrl;
 
-    /**
-     * Initialise les données et lie l'affichage de l'argent.
-     */
     public void setData(Wallet wallet, Inventory inventory, MainController mainCtrl) {
         this.mainCtrl = mainCtrl;
 
@@ -26,58 +20,89 @@ public class ShopController {
             shopWalletLabel.textProperty().bind(wallet.moneyProperty().asString("Mon argent: %d €"));
         }
 
-        // Remplissage de la liste avec les graines et les animaux
-        shopListView.getItems().clear();
-        shopListView.getItems().addAll((Object[]) CropType.values());
-        shopListView.getItems().addAll((Object[]) AnimalType.values());
+        setupSeedsList();
+        setupAnimalsList();
+    }
 
-        // Personnalisation de l'affichage des lignes
-        shopListView.setCellFactory(lv -> new ListCell<>() {
+    private void setupSeedsList() {
+        if (seedsListView == null) return;
+        seedsListView.getItems().setAll(CropType.values());
+        seedsListView.setCellFactory(lv -> new ListCell<CropType>() {
             @Override
-            protected void updateItem(Object item, boolean empty) {
+            protected void updateItem(CropType item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
-                } else if (item instanceof CropType) {
-                    CropType c = (CropType) item;
-                    setText("[GRAINE] " + c.getName() + " - " + c.getBuyPrice() + " €");
-                } else if (item instanceof AnimalType) {
-                    AnimalType a = (AnimalType) item;
-                    setText("[ANIMAL] " + a.getName() + " - " + a.getBuyPrice() + " €");
+                } else {
+                    setText(getCropEmoji(item.getName()) + " " + item.getName() + " (" + item.getBuyPrice() + " €)");
                 }
             }
         });
     }
 
-    /**
-     * Gère l'achat de l'élément sélectionné.
-     */
-    @FXML
-    public void handleBuy(ActionEvent actionEvent) {
-        processPurchase();
+    private void setupAnimalsList() {
+        if (animalsListView == null) return;
+        animalsListView.getItems().setAll(AnimalType.values());
+        animalsListView.setCellFactory(lv -> new ListCell<AnimalType>() {
+            @Override
+            protected void updateItem(AnimalType item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(getAnimalEmoji(item.getName()) + " " + item.getName() + " (" + item.getBuyPrice() + " €)");
+                }
+            }
+        });
     }
 
-    /**
-     * MÉTHODE AJOUTÉE : Pour correspondre à certaines versions du FXML
-     * qui utilisent onAction="#handleBuyPlot".
-     */
-    @FXML
-    public void handleBuyPlot(ActionEvent actionEvent) {
-        processPurchase();
+    private String getCropEmoji(String n) {
+        String name = n.toLowerCase();
+        if (name.contains("blé")) return "🌾";
+        if (name.contains("maïs")) return "🌽";
+        if (name.contains("carotte")) return "🥕";
+        if (name.contains("tomate")) return "🍅";
+        return "🌱";
     }
 
-    /**
-     * Logique commune d'achat pour éviter la duplication de code.
-     */
-    private void processPurchase() {
-        Object selected = shopListView.getSelectionModel().getSelectedItem();
-        if (selected == null) return;
+    private String getAnimalEmoji(String n) {
+        String name = n.toLowerCase();
+        if (name.contains("poule")) return "🐔";
+        if (name.contains("vache")) return "🐄";
+        if (name.contains("mouton")) return "🐑";
+        if (name.contains("cochon")) return "🐷";
+        return "🐾";
+    }
 
-        // Délégation de l'achat au service centralisé
-        boolean success = GameService.getInstance().buy(selected);
+    @FXML
+    public void handleBuy(ActionEvent event) {
+        // On vérifie d'abord l'onglet des graines, puis celui des animaux
+        Object selected = seedsListView.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            selected = animalsListView.getSelectionModel().getSelectedItem();
+        }
 
-        if (success && mainCtrl != null) {
+        if (selected != null && GameService.getInstance().buy(selected)) {
             mainCtrl.refreshInventoryUI();
+        }
+    }
+
+    @FXML
+    public void handleBuyPlot() {
+        // Logique pour l'onglet Terrain
+        System.out.println("Achat terrain demandé via l'interface");
+    }
+
+    @FXML
+    public void handleBuyBonus() {
+        // Méthode prévue pour ton futur onglet Bonus
+        System.out.println("Achat Bonus (Bientôt disponible)");
+    }
+
+    @FXML
+    public void handleCloseShop() {
+        if (shopWalletLabel != null && shopWalletLabel.getScene() != null) {
+            shopWalletLabel.getScene().getWindow().hide();
         }
     }
 }

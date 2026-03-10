@@ -13,14 +13,13 @@ import main.java.service.CameraService;
 public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
-
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Main.fxml"));
         Scene scene = new Scene(loader.load());
 
+        scene.getStylesheets().add(getClass().getResource("/css/style.css").toExternalForm());
 
         MainController controller = loader.getController();
         scene.setOnKeyPressed(controller::handleKeyPress);
-
 
         SaveManager.loadGame();
 
@@ -31,7 +30,6 @@ public class Main extends Application {
 
     @Override
     public void stop() {
-
         SaveManager.saveGame();
     }
 

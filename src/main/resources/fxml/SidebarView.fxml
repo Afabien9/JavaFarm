@@ -3,31 +3,34 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox fx:id="sidebarRoot" spacing="15" prefWidth="280"
-      style="-fx-background-color: #2c3e50;"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="main.java.controller.SidebarController">
+<VBox fx:id="sidebarRoot" spacing="30" prefWidth="1000" styleClass="sidebar"
+      xmlns:fx="http://javafx.com/fxml" fx:controller="main.java.controller.SidebarController">
 
-    <padding><Insets top="20" right="15" bottom="20" left="15"/></padding>
+    <padding><Insets top="30" right="25" bottom="30" left="25"/></padding>
 
-    <Label fx:id="walletLabel" text="Argent: 0 €" style="-fx-text-fill: #f1c40f; -fx-font-size: 18; -fx-font-weight: bold;"/>
+    <VBox spacing="10" alignment="CENTER">
+        <Label fx:id="walletLabel" text="0 €"
+               style="-fx-background-color: #3e2723; -fx-text-fill: #f1c40f; -fx-padding: 15 30; -fx-background-radius: 20; -fx-font-size: 30; -fx-font-weight: bold;"/>
+    </VBox>
 
-    <Separator/>
+    <Separator opacity="0.4"/>
 
-    <Label text="MODE CONSTRUCTION" style="-fx-text-fill: white; -fx-font-size: 10;"/>
-    <HBox spacing="10">
-        <Button text="TERRE" onAction="#handleModePlots" HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                style="-fx-background-color: #8b4513; -fx-text-fill: white;"/>
-        <Button text="ENCLOS" onAction="#handleModeEnclosures" HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                style="-fx-background-color: #7f8c8d; -fx-text-fill: white;"/>
-    </HBox>
-    <ToggleButton fx:id="buildToggle" text="ACTIVER CONSTRUCTION (B)" onAction="#handleToggleBuild" maxWidth="Infinity"/>
+    <VBox spacing="20">
+        <Label text="CONSTRUCTION" style="-fx-font-weight: bold; -fx-text-fill: #3e2723; -fx-font-size: 14;"/>
+        <HBox spacing="15">
+            <Button text="🟫 TERRE" onAction="#handleModePlots" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-padding: 12;"/>
+            <Button text="⬜ ENCLOS" onAction="#handleModeEnclosures" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-padding: 12;"/>
+        </HBox>
+        <ToggleButton fx:id="buildToggle" text="MODE ÉDITION (B)" onAction="#handleToggleBuild" maxWidth="Infinity" style="-fx-padding: 12;"/>
+    </VBox>
 
-    <Separator/>
+    <Separator opacity="0.4"/>
 
-    <Label text="INVENTAIRE" style="-fx-text-fill: white;"/>
-    <ListView fx:id="inventoryListView" VBox.vgrow="ALWAYS" style="-fx-background-color: #34495e;"/>
+    <VBox spacing="20" VBox.vgrow="ALWAYS" alignment="CENTER">
+        <Button text="📦 MA GRANGE" onAction="#handleOpenInventory" maxWidth="Infinity"
+                style="-fx-background-color: #8d6e63; -fx-text-fill: white; -fx-font-size: 20; -fx-padding: 20; -fx-background-radius: 25; -fx-font-weight: bold;"/>
 
-    <Button text="BOUTIQUE" onAction="#handleOpenShop" maxWidth="Infinity" style="-fx-background-color: #27ae60; -fx-text-fill: white;"/>
-    <Button text="TOUT VENDRE" onAction="#sellAll" maxWidth="Infinity" style="-fx-background-color: #e67e22; -fx-text-fill: white;"/>
+        <Button text="🛒 BOUTIQUE" onAction="#handleOpenShop" maxWidth="Infinity" styleClass="btn-shop"
+                style="-fx-font-size: 20; -fx-padding: 20;"/>
+    </VBox>
 </VBox>

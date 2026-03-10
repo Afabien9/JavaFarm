@@ -10,7 +10,6 @@ public class Plot {
     private final ObjectProperty<PlotState> state = new SimpleObjectProperty<>(PlotState.EMPTY);
     private final BooleanProperty locked = new SimpleBooleanProperty(false);
 
-    // 0 = Semis (Bleu), 1 = Croissance (Vert), 2 = Prêt (Récolte)
     private final IntegerProperty growthStage = new SimpleIntegerProperty(0);
 
     private Crop currentCrop;
@@ -26,14 +25,14 @@ public class Plot {
         });
     }
 
-    public void plant(Crop crop) {
-        if (locked.get() || state.get() != PlotState.EMPTY || crop == null) return;
+    public void plant(CropType type) {
+        if (locked.get() || state.get() != PlotState.EMPTY || type == null) return;
 
-        this.currentCrop = crop;
+        this.currentCrop = new Crop(type);
         this.state.set(PlotState.GROWING);
-        this.growthStage.set(0); // Initialise à 0 (déclenche le bleu)
+        this.growthStage.set(0);
 
-        double totalTime = GameService.getInstance().isDebugActive() ? 1.0 : crop.getGrowthTime();
+        double totalTime = GameService.getInstance().isDebugActive() ? 1.0 : currentCrop.getGrowthTime();
         startGrowthCycle(totalTime);
     }
 
@@ -42,10 +41,10 @@ public class Plot {
 
         growthTimeline = new Timeline(
                 new KeyFrame(Duration.seconds(totalTime / 2), event -> {
-                    this.growthStage.set(1); // Passage au vert
+                    this.growthStage.set(1);
                 }),
                 new KeyFrame(Duration.seconds(totalTime), event -> {
-                    this.growthStage.set(2); // Prêt pour récolte
+                    this.growthStage.set(2);
                     this.state.set(PlotState.READY);
                 })
         );
@@ -67,4 +66,5 @@ public class Plot {
     public IntegerProperty growthStageProperty() { return growthStage; }
     public Crop getCurrentCrop() { return currentCrop; }
     public void setLocked(boolean b) { this.locked.set(b); }
+    public boolean isLocked() { return locked.get(); }
 }

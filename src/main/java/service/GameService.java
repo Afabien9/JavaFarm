@@ -68,7 +68,7 @@ public class GameService {
                     effectiveGrowthTime
             );
 
-            plot.plant(newPlant);
+            plot.plant(newPlant.getType());
             if (!allPlots.contains(plot)) allPlots.add(plot);
         }
     }

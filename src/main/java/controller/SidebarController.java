@@ -130,6 +130,10 @@ public class SidebarController {
     private void handleOpenDebug() {
         if (mainCtrl != null) mainCtrl.toggleDebugMode();
     }
+    @FXML
+    private void handleOpenInventory() {
+        mainCtrl.handleOpenInventory(); // Déléguez au MainController qui gère les fenêtres
+    }
 
     /**
      * Vend l'intégralité de l'inventaire.
@@ -144,6 +148,7 @@ public class SidebarController {
             // Vente des produits animaux
             mainCtrl.sellAnimalProducts();
         }
+
     }
 
     public void setMainController(MainController m) {

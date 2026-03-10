@@ -1,0 +1,47 @@
+.root {
+    -color-grass: #7ac141;
+    -color-dirt: #8b4513;
+    -color-wood-dark: #3e2723;
+    -color-wood-light: #f5e6b5;
+    -color-accent-gold: #f1c40f;
+    -color-accent-blue: #03a9f4;
+    -color-accent-orange: #f4511e;
+}
+
+.sidebar {
+    -fx-background-color: -color-wood-light;
+    -fx-background-radius: 25;
+    -fx-border-color: -color-wood-dark;
+    -fx-border-width: 4;
+    -fx-border-radius: 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 5);
+}
+
+.button {
+    -fx-background-radius: 20;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-shop {
+    -fx-background-color: -color-accent-blue;
+    -fx-text-fill: white;
+    -fx-border-color: #0288d1;
+    -fx-border-width: 0 0 4 0;
+    -fx-border-radius: 20;
+}
+
+.btn-sell {
+    -fx-background-color: -color-accent-orange;
+    -fx-text-fill: white;
+    -fx-border-color: #bf360c;
+    -fx-border-width: 0 0 4 0;
+    -fx-border-radius: 20;
+}
+
+.list-view {
+    -fx-background-color: rgba(255, 255, 255, 0.5);
+    -fx-background-radius: 15;
+    -fx-border-color: #d7ccc8;
+    -fx-border-radius: 15;
+}

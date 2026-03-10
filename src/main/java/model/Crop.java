@@ -2,13 +2,21 @@ package main.java.model;
 
 import javafx.scene.paint.Color;
 
-
 public class Crop {
     private final String name;
-    private final int growthTime; // Temps en secondes avant que l'état passe à READY
+    private final int growthTime;
     private final int buyPrice;
     private final int sellPrice;
     private CropType type;
+
+    // Nouveau constructeur pour accepter CropType
+    public Crop(CropType type) {
+        this.type = type;
+        this.name = type.getName();
+        this.growthTime = (int) type.getGrowthTime();
+        this.buyPrice = type.getBuyPrice();
+        this.sellPrice = (int) (type.getBuyPrice() * 1.5);
+    }
 
     public Crop(String name, int growthTime, int buyPrice, int sellPrice) {
         this.name = name;
@@ -17,9 +25,6 @@ public class Crop {
         this.sellPrice = sellPrice;
     }
 
-    /**
-     * Retourne la couleur spécifique à afficher quand la plante est mûre.
-     */
     public Color getReadyColor() {
         if (name == null) return Color.GOLD;
 
@@ -31,29 +36,10 @@ public class Crop {
         };
     }
 
-    // --- GETTERS ET SETTERS ---
-
-    public String getName() {
-        return name;
-    }
-
-    public int getGrowthTime() {
-        return growthTime;
-    }
-
-    public int getBuyPrice() {
-        return buyPrice;
-    }
-
-    public int getSellPrice() {
-        return sellPrice;
-    }
-
-    public CropType getType() {
-        return type;
-    }
-
-    public void setType(CropType type) {
-        this.type = type;
-    }
+    public String getName() { return name; }
+    public int getGrowthTime() { return growthTime; }
+    public int getBuyPrice() { return buyPrice; }
+    public int getSellPrice() { return sellPrice; }
+    public CropType getType() { return type; }
+    public void setType(CropType type) { this.type = type; }
 }

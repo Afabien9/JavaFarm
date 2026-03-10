@@ -1,20 +1,12 @@
 package main.java.controller;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.Color;
 import javafx.scene.input.MouseEvent;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import main.java.model.*;
 import main.java.service.GameService;
-import main.java.service.SelectionService;
-
-import java.io.IOException;
 
 public class MapController {
 
@@ -55,14 +47,22 @@ public class MapController {
         rect.setX(snapX);
         rect.setY(snapY);
         rect.setStroke(Color.BLACK);
+        rect.setArcWidth(10);
+        rect.setArcHeight(10);
 
         rect.setOnMouseClicked(event -> {
             if (!mainController.isBuildModeActive()) {
-                handlePlotInteraction(plotModel, rect);
+                handlePlotInteraction(plotModel);
                 event.consume();
             }
         });
 
+        // Listener sur l'état pour forcer la mise à jour dès la plantation
+        plotModel.stateProperty().addListener((obs, oldState, newState) -> {
+            updatePlotVisual(plotModel, rect, plotModel.growthStageProperty().get());
+        });
+
+        // Listener sur l'étape de croissance pour changer les couleurs
         plotModel.growthStageProperty().addListener((obs, oldStage, newStage) -> {
             updatePlotVisual(plotModel, rect, newStage.intValue());
         });
@@ -70,17 +70,13 @@ public class MapController {
         mapPane.getChildren().add(rect);
     }
 
-    private void handlePlotInteraction(Plot plot, Rectangle rect) {
+    private void handlePlotInteraction(Plot plot) {
         if (plot.getState() == PlotState.EMPTY) {
-            CropType selected = SelectionService.getInstance().getSelectedCrop();
-            if (selected != null) {
-                GameService.getInstance().plantCrop(plot, selected);
-                // FORCE le changement de couleur instantané en bleu (stade 0)
-                updatePlotVisual(plot, rect, 0);
-                mainController.refreshInventoryUI();
-            }
+            mainController.openPlantingMenu(plot);
         } else if (plot.getState() == PlotState.READY) {
-            GameService.getInstance().harvestCrop(plot);
+            CropType harvestedType = plot.getCurrentCrop().getType();
+            plot.harvest();
+            inventory.addProduct(harvestedType, 1);
             mainController.refreshInventoryUI();
         }
     }
@@ -90,14 +86,9 @@ public class MapController {
             rect.setFill(Color.BROWN);
             return;
         }
-
         switch (stage) {
-            case 0:
-                rect.setFill(Color.CORNFLOWERBLUE); // BLEU INSTANTANÉ
-                break;
-            case 1:
-                rect.setFill(Color.LIMEGREEN);
-                break;
+            case 0: rect.setFill(Color.CORNFLOWERBLUE); break;
+            case 1: rect.setFill(Color.LIMEGREEN); break;
             case 2:
                 if (plot.getCurrentCrop() != null) rect.setFill(plot.getCurrentCrop().getReadyColor());
                 else rect.setFill(Color.GOLD);
@@ -113,9 +104,9 @@ public class MapController {
         Rectangle rect = new Rectangle(CELL_SIZE, CELL_SIZE, Color.web("#bdc3c7"));
         rect.setX(snapX);
         rect.setY(snapY);
-        rect.setArcWidth(15);
-        rect.setArcHeight(15);
-        rect.setStroke(Color.web("#2c3e50"));
+        rect.setArcWidth(20);
+        rect.setArcHeight(20);
+        rect.setStroke(Color.web("#7f8c8d"));
         rect.setStrokeWidth(2);
 
         rect.setOnMouseClicked(event -> {
@@ -127,10 +118,10 @@ public class MapController {
 
         enclosureModel.stateProperty().addListener((obs, old, newState) -> {
             if (newState == PlotState.READY) {
-                rect.setStroke(Color.YELLOW);
+                rect.setStroke(Color.GOLD);
                 rect.setStrokeWidth(4);
             } else {
-                rect.setStroke(Color.web("#2c3e50"));
+                rect.setStroke(Color.web("#7f8c8d"));
                 rect.setStrokeWidth(2);
             }
         });
@@ -140,36 +131,28 @@ public class MapController {
 
     private void handleEnclosureInteraction(Enclosure enc, Rectangle rect) {
         if (enc.getState() == PlotState.EMPTY) {
-            AnimalType selectedAnimal = SelectionService.getInstance().getSelectedAnimal();
-            if (selectedAnimal != null) {
-                GameService.getInstance().buyAnimal(enc, selectedAnimal);
-                if (enc.getCurrentAnimal() != null) {
-                    rect.setFill(selectedAnimal.getAnimalColor());
-                    mainController.refreshInventoryUI();
-                }
-            }
+            mainController.openShop();
         } else if (enc.getState() == PlotState.READY) {
             GameService.getInstance().collectFromEnclosure(enc);
             mainController.refreshInventoryUI();
         } else {
-            openFeedingWindow(enc);
+            openAnimalInterface(enc);
         }
     }
 
-    private void openFeedingWindow(Enclosure enc) {
+    private void openAnimalInterface(Enclosure enc) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/AnimalInteractionView.fxml"));
-            Parent root = loader.load();
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/AnimalInteractionView.fxml"));
+            javafx.scene.Parent root = loader.load();
             AnimalInteractionController ctrl = loader.getController();
             ctrl.setEnclosure(enc);
 
-            Stage stage = new Stage();
-            stage.setTitle("Nourrir l'animal");
-            stage.setScene(new Scene(root));
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.showAndWait();
-
-            mainController.refreshInventoryUI();
-        } catch (IOException e) { e.printStackTrace(); }
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.initStyle(javafx.stage.StageStyle.UNDECORATED);
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.show();
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
     }
 }

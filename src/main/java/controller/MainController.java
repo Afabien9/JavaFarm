@@ -8,20 +8,20 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import main.java.model.*;
 import main.java.service.GameService;
 import java.io.IOException;
 
 public class MainController {
 
-    /**
-     * DÉFINITION : L'énumération des types de structures.
-     */
     public enum StructureType { PLOT, ENCLOSURE }
 
     @FXML private ScrollPane mapScroll;
     @FXML private Label statusLabel;
+    @FXML private HBox buildToolbar;
 
     @FXML private SidebarController sidebarController;
     @FXML private MapController mapController;
@@ -30,11 +30,10 @@ public class MainController {
     private final Inventory inventory = new Inventory();
 
     private boolean buildModeActive = false;
-    private StructureType activeStructureType = StructureType.PLOT; // Par défaut : Champs
+    private StructureType activeStructureType = StructureType.PLOT;
 
     @FXML
     public void initialize() {
-        // Synchronisation des services
         GameService.getInstance().setInventory(this.inventory);
         GameService.getInstance().setWallet(this.wallet);
 
@@ -52,8 +51,6 @@ public class MainController {
         });
     }
 
-    // --- GESTION DE LA CONSTRUCTION (Utilisé par MapController) ---
-
     public void setStructureToBuild(StructureType type) {
         this.activeStructureType = type;
         if (statusLabel != null) {
@@ -61,25 +58,21 @@ public class MainController {
         }
     }
 
-    /**
-     * Permet au MapController de savoir quoi construire.
-     */
-    public StructureType getActiveStructureType() {
-        return activeStructureType;
-    }
-
     public void toggleBuildMode() {
         this.buildModeActive = !this.buildModeActive;
+        if (buildToolbar != null) {
+            buildToolbar.setVisible(buildModeActive);
+        }
         if (statusLabel != null) {
             statusLabel.setText(buildModeActive ? "MODE CONSTRUCTION ACTIF" : "MODE INTERACTION");
         }
     }
 
-    public boolean isBuildModeActive() {
-        return buildModeActive;
-    }
+    public boolean isBuildModeActive() { return buildModeActive; }
+    public StructureType getActiveStructureType() { return activeStructureType; }
 
-    // --- ACTIONS CLAVIER ---
+    @FXML public void handleModePlots() { setStructureToBuild(StructureType.PLOT); }
+    @FXML public void handleModeEnclosures() { setStructureToBuild(StructureType.ENCLOSURE); }
 
     @FXML
     public void handleKeyPress(KeyEvent e) {
@@ -89,8 +82,6 @@ public class MainController {
             default: break;
         }
     }
-
-    // --- LOGIQUE DE VENTE ---
 
     public void sellCrops(CropType type, int qty) {
         if (type == null) return;
@@ -102,16 +93,10 @@ public class MainController {
         }
     }
 
-    /**
-     * Vend tous les produits animaux (Lait, Oeufs, Laine) présents dans l'inventaire.
-     */
     public void sellAnimalProducts() {
         if (inventory == null || wallet == null) return;
-
-        // On parcourt la map des produits récoltés
         inventory.getAnimalProducts().forEach((productName, qty) -> {
             if (qty > 0) {
-                // On identifie le prix de vente en cherchant l'AnimalType correspondant au produit
                 for (AnimalType type : AnimalType.values()) {
                     if (type.getProduct().equalsIgnoreCase(productName)) {
                         wallet.addMoney(type.getProductValue() * qty);
@@ -120,25 +105,24 @@ public class MainController {
                 }
             }
         });
-
-        // Une fois vendu, on vide le stock de produits animaux
         inventory.clearAnimalProducts();
         refreshInventoryUI();
     }
 
-    // --- AUTRES MÉTHODES ---
+    public void sellAll() {
+        for (CropType type : CropType.values()) {
+            sellCrops(type, -1);
+        }
+        sellAnimalProducts();
+    }
 
     public void toggleDebugMode() {
         GameService.getInstance().toggleDebug();
         boolean isActive = GameService.getInstance().isDebugActive();
-
         if (statusLabel != null) {
             statusLabel.setText(isActive ? "DEBUG : ACTIF (+1000€)" : "DEBUG : DÉSACTIVÉ");
         }
-
-        if (isActive) {
-            wallet.addMoney(1000);
-        }
+        if (isActive) wallet.addMoney(1000);
         refreshInventoryUI();
     }
 
@@ -148,11 +132,45 @@ public class MainController {
             Parent root = loader.load();
             ShopController shopCtrl = loader.getController();
             shopCtrl.setData(wallet, inventory, this);
-            Stage stage = new Stage();
-            stage.setTitle("Boutique");
-            stage.setScene(new Scene(root));
-            stage.show();
+
+            showPopup(root, "Boutique de la Ferme");
         } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    public void handleOpenInventory() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/InventoryView.fxml"));
+            Parent root = loader.load();
+            InventoryController invCtrl = loader.getController();
+            invCtrl.setData(inventory, this);
+
+            showPopup(root, "Ma Grange (Inventaire)");
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    public void openPlantingMenu(Plot plot) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PlantationView.fxml"));
+            Parent root = loader.load();
+            PlantationController plantCtrl = loader.getController();
+            plantCtrl.setData(inventory, plot, this);
+
+            showPopup(root, "Semer des graines");
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    private void showPopup(Parent root, String title) {
+        Stage stage = new Stage();
+        stage.setTitle(title);
+        stage.initStyle(StageStyle.UNDECORATED);
+        Scene scene = new Scene(root);
+        // Ajout du CSS pour que les boutons personnalisés s'affichent bien dans les popups
+        if (getClass().getResource("/css/style.css") != null) {
+            scene.getStylesheets().add(getClass().getResource("/css/style.css").toExternalForm());
+        }
+        stage.setScene(scene);
+        stage.centerOnScreen();
+        stage.show();
     }
 
     public void refreshInventoryUI() {
@@ -163,6 +181,5 @@ public class MainController {
         if (sidebarController != null) sidebarController.updateWeatherDisplay(w);
     }
 
-    @FXML
-    public void handleExit(ActionEvent event) { System.exit(0); }
+    @FXML public void handleExit(ActionEvent event) { System.exit(0); }
 }

@@ -15,23 +15,34 @@ public class AnimalInteractionController {
 
     public void setEnclosure(Enclosure enc) {
         this.enclosure = enc;
-        animalNameLabel.setText(enc.getCurrentAnimal().getName());
 
-        // Affichage des besoins selon l'animal
+        String animalName = enc.getCurrentAnimal().getName();
+        animalNameLabel.setText(getAnimalEmoji(animalName) + " " + animalName);
+
         String food = switch(enc.getCurrentAnimal()) {
             case CHICKEN -> "Graines de Blé";
             case COW -> "Maïs récolté";
             case SHEEP -> "Blé récolté";
+            default -> "Nourriture";
         };
-        needsLabel.setText("Nécessite : 1x " + food);
 
+        needsLabel.setText("Nécessite : 1x " + food);
         updateUI();
     }
 
     private void updateUI() {
         boolean hungry = enclosure.isHungryProperty().get();
-        statusLabel.setText(hungry ? "État : Affamé" : "État : En production...");
+        statusLabel.setText(hungry ? "État : 😋 Affamé" : "État : ✨ En production...");
         feedButton.setDisable(!hungry);
+    }
+
+    private String getAnimalEmoji(String name) {
+        if (name == null) return "🐾";
+        String n = name.toLowerCase();
+        if (n.contains("poule") || n.contains("chicken")) return "🐔";
+        if (n.contains("vache") || n.contains("cow")) return "🐄";
+        if (n.contains("mouton") || n.contains("sheep")) return "🐑";
+        return "🐾";
     }
 
     @FXML
@@ -39,7 +50,15 @@ public class AnimalInteractionController {
         if (FeedingService.getInstance().tryFeed(enclosure)) {
             updateUI();
         } else {
-            statusLabel.setText("Stock insuffisant !");
+            statusLabel.setText("❌ Stock insuffisant !");
+            statusLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+        }
+    }
+
+    @FXML
+    private void handleClose() {
+        if (animalNameLabel.getScene() != null) {
+            animalNameLabel.getScene().getWindow().hide();
         }
     }
 }

@@ -1,32 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<VBox spacing="10" alignment="CENTER" prefWidth="300" prefHeight="400"
-      xmlns:fx="http://javafx.com/fxml" fx:controller="main.java.controller.ShopController"
-      style="-fx-padding: 20; -fx-background-color: #f4f4f4;">
-    <TabPane>
+<VBox spacing="20" alignment="TOP_CENTER" prefWidth="450" prefHeight="550"
+      style="-fx-background-color: #f5e6b5; -fx-border-color: #3e2723; -fx-border-width: 5; -fx-background-radius: 30; -fx-border-radius: 30;"
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.java.controller.ShopController">
+
+    <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
+
+    <Label text="BOUTIQUE DE LA FERME" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #3e2723;"/>
+    <Label fx:id="shopWalletLabel" style="-fx-background-color: #3e2723; -fx-text-fill: #f1c40f; -fx-padding: 8 20; -fx-background-radius: 15; -fx-font-weight: bold;"/>
+
+    <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;">
         <tabs>
-            <Tab text="Graines" closable="false">
-                <VBox spacing="10">
-                    <ListView fx:id="shopListView" />
-                    <Button text="Acheter Graine" onAction="#handleBuy" />
+            <Tab text="🌾 GRAINES">
+                <VBox spacing="15" style="-fx-padding: 15 0 0 0;">
+                    <ListView fx:id="seedsListView" VBox.vgrow="ALWAYS" styleClass="list-view"/>
+                    <Button text="ACHETER" onAction="#handleBuy" maxWidth="Infinity" styleClass="btn-shop"/>
                 </VBox>
             </Tab>
-
-            <Tab text="Terrain" closable="false">
-                <VBox spacing="10" alignment="CENTER">
-                    <Label text="Acheter une nouvelle parcelle" />
-                    <Label text="Prix : 500 €" style="-fx-font-weight: bold;" /> <Button text="Acheter Terrain" onAction="#handleBuyPlot"
-                                                                                         style="-fx-background-color: #8b4513; -fx-text-fill: white;" />
+            <Tab text="🐄 ANIMAUX">
+                <VBox spacing="15" style="-fx-padding: 15 0 0 0;">
+                    <ListView fx:id="animalsListView" VBox.vgrow="ALWAYS" styleClass="list-view"/>
+                    <Button text="ACHETER" onAction="#handleBuy" maxWidth="Infinity" styleClass="btn-shop"/>
                 </VBox>
+            </Tab>
+            <Tab text="🚜 TERRAIN">
+                <VBox spacing="20" alignment="CENTER" style="-fx-padding: 30;">
+                    <Label text="AGRANDIR LA FERME" style="-fx-font-weight: bold;"/>
+                    <Button text="ACHETER PARCELLE (500€)" onAction="#handleBuyPlot" styleClass="btn-sell"/>
+                </VBox>
+            </Tab>
+            <Tab text="🎁 BONUS">
+                <StackPane VBox.vgrow="ALWAYS">
+                    <Label text="Bientôt disponible..." style="-fx-font-style: italic; -fx-text-fill: #7f8c8d;"/>
+                </StackPane>
             </Tab>
         </tabs>
     </TabPane>
 
-    <Label text="BOUTIQUE DE GRAINES" style="-fx-font-weight: bold; -fx-font-size: 18;"/>
-    <Label fx:id="shopWalletLabel" text="Mon argent: 0 €" />
-
-    <Button text="Acheter la graine sélectionnée" onAction="#handleBuy"
-            style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+    <Button text="RETOUR" onAction="#handleCloseShop" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-background-radius: 15;"/>
 </VBox>
