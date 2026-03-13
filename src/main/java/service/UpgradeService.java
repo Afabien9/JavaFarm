@@ -13,7 +13,7 @@ public class UpgradeService {
         return instance;
     }
 
-    // MÉTHODE MANQUANTE AJOUTÉE ICI
+
     public boolean hasUpgrade(UpgradeType upgrade) {
         return purchasedUpgrades.contains(upgrade);
     }
@@ -21,7 +21,7 @@ public class UpgradeService {
     public boolean buyUpgrade(UpgradeType upgrade) {
         if (hasUpgrade(upgrade)) return false;
 
-        // Vérification du portefeuille via GameService
+
         if (GameService.getInstance().getWallet().spendMoney(upgrade.getPrice())) {
             purchasedUpgrades.add(upgrade);
             return true;

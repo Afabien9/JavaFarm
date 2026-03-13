@@ -26,17 +26,6 @@
                     <Button text="ACHETER" onAction="#handleBuy" maxWidth="Infinity" styleClass="btn-shop"/>
                 </VBox>
             </Tab>
-            <Tab text="🚜 TERRAIN">
-                <VBox spacing="20" alignment="CENTER" style="-fx-padding: 30;">
-                    <Label text="AGRANDIR LA FERME" style="-fx-font-weight: bold;"/>
-                    <Button text="ACHETER PARCELLE (500€)" onAction="#handleBuyPlot" styleClass="btn-sell"/>
-                </VBox>
-            </Tab>
-            <Tab text="🎁 BONUS">
-                <StackPane VBox.vgrow="ALWAYS">
-                    <Label text="Bientôt disponible..." style="-fx-font-style: italic; -fx-text-fill: #7f8c8d;"/>
-                </StackPane>
-            </Tab>
         </tabs>
     </TabPane>
 

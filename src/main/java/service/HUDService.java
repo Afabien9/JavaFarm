@@ -10,14 +10,14 @@ public class HUDService {
     public static VBox createHelpMenu() {
         VBox menu = new VBox(8);
         menu.setPadding(new Insets(15));
-        // Fond sombre transparent pour le contraste
+
         menu.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7); -fx-background-radius: 12; -fx-border-color: #f1c40f; -fx-border-radius: 12; -fx-border-width: 2;");
-        menu.setMouseTransparent(true); // Pour ne pas bloquer les clics sur la ferme
+        menu.setMouseTransparent(true);
 
         Label title = new Label("AIDE À LA CONSTRUCTION");
         title.setStyle("-fx-text-fill: #f1c40f; -fx-font-weight: bold; -fx-font-size: 14px;");
 
-        // Style commun pour les touches
+
         String keyStyle = "-fx-text-fill: #ecf0f1; -fx-font-family: 'Monospaced'; -fx-font-size: 12px;";
 
         Label pKey = new Label("[P] + Clic : Acheter Parcelle (100€)");

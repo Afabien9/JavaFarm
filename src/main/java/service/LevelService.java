@@ -2,11 +2,10 @@ package main.java.service;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import main.java.model.AnimalType;
 import main.java.model.CropType;
 
-/**
- * Service gérant la progression du joueur et le déblocage du contenu.
- */
+
 public class LevelService {
     private static LevelService instance;
 
@@ -26,7 +25,6 @@ public class LevelService {
         checkLevelUp();
     }
 
-
     public int getMaxPlots() {
         return 2 + (getCurrentLevel() - 1) * 2;
     }
@@ -40,19 +38,27 @@ public class LevelService {
             currentXP.set(currentXP.get() - xpToNextLevel.get());
             currentLevel.set(currentLevel.get() + 1);
 
+
             int nextThreshold = (int) (xpToNextLevel.get() * 1.5);
             xpToNextLevel.set(nextThreshold);
 
             System.out.println("[LEVEL] FÉLICITATIONS ! Niveau " + currentLevel.get() + " atteint !");
 
-            // --- ANNONCE DES DÉBLOCAGES ---
+
             for (CropType type : CropType.values()) {
                 if (type.getMinLevel() == currentLevel.get()) {
-                    System.out.println("[DÉBLOCAGE] La graine '" + type.getName() + "' est maintenant disponible !");
+                    System.out.println("[DÉBLOCAGE] Graine débloquée : " + type.getName());
                 }
             }
 
-            // Bonus financier
+
+            for (AnimalType animal : AnimalType.values()) {
+                if (animal.getRequiredLevel() == currentLevel.get()) {
+                    System.out.println("[DÉBLOCAGE] Nouvel animal disponible : " + animal.getName());
+                }
+            }
+
+
             if (GameService.getInstance().getWallet() != null) {
                 GameService.getInstance().getWallet().addMoney(100);
             }

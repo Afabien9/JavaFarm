@@ -8,10 +8,10 @@ import main.java.model.*;
 public class PlacementService {
     private static PlacementService instance;
 
-    // --- CONSTANTES DE GRILLE ---
-    private final int GRID_SIZE = 80;    // Taille d'une parcelle
-    private final int GAP = 10;          // Espace entre les parcelles
-    private final int CELL_TOTAL = GRID_SIZE + GAP; // La variable manquante (90px)
+
+    private final int GRID_SIZE = 80;
+    private final int GAP = 10;
+    private final int CELL_TOTAL = GRID_SIZE + GAP;
 
     public static PlacementService getInstance() {
         if (instance == null) instance = new PlacementService();
@@ -47,35 +47,30 @@ public class PlacementService {
             gameWorld.getChildren().add(rect);
         }
     }
-    /**
-     * Achète et place un enclos pour animaux sur la carte.
-     * @param gameWorld Le panneau où l'objet est ajouté.
-     * @param x Coordonnée X du clic.
-     * @param y Coordonnée Y du clic.
-     */
+
     public void buyAndPlaceEnclosure(Pane gameWorld, double x, double y) {
-        // Calcul de l'alignement sur la grille (identique aux parcelles)
+
         double snapX = Math.floor(x / CELL_TOTAL) * CELL_TOTAL;
         double snapY = Math.floor(y / CELL_TOTAL) * CELL_TOTAL;
 
-        // Vérification de collision : l'enclos fait 80x80
+
         if (CollisionService.getInstance().isAreaOccupied(gameWorld, snapX, snapY, GRID_SIZE, GRID_SIZE)) {
             System.out.println("Zone déjà occupée !");
             return;
         }
 
-        // Un enclos coûte 500€ selon votre HUD et votre ConstructionManager
+
         if (GameService.getInstance().getWallet().spendMoney(500)) {
             Rectangle enclosure = new Rectangle(GRID_SIZE, GRID_SIZE);
             enclosure.setX(snapX);
             enclosure.setY(snapY);
 
-            // Couleur spécifique pour différencier l'enclos de la terre
+
             enclosure.setFill(Color.web("#bdc3c7"));
             enclosure.setStroke(Color.web("#7f8c8d"));
             enclosure.setStrokeWidth(3);
 
-            // Coins arrondis pour un aspect "barrière"
+
             enclosure.setArcWidth(15);
             enclosure.setArcHeight(15);
 

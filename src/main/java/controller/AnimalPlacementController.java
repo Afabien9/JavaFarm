@@ -10,6 +10,7 @@ import javafx.stage.Stage;
 import main.java.model.AnimalType;
 import main.java.model.Enclosure;
 import main.java.model.Inventory;
+import main.java.service.LevelService;
 
 public class AnimalPlacementController {
 
@@ -29,49 +30,67 @@ public class AnimalPlacementController {
 
     private void refreshUI() {
         animalContainer.getChildren().clear();
-        boolean hasAnimals = false;
+        boolean hasAnimalsInInventory = false;
+        int currentLevel = LevelService.getInstance().getCurrentLevel();
 
         for (AnimalType type : AnimalType.values()) {
             int qty = inventory.getAnimals().getOrDefault(type, 0);
             if (qty > 0) {
-                animalContainer.getChildren().add(createAnimalRow(type, qty));
-                hasAnimals = true;
+                animalContainer.getChildren().add(createAnimalRow(type, qty, currentLevel));
+                hasAnimalsInInventory = true;
             }
         }
 
-        if (!hasAnimals) {
+        if (!hasAnimalsInInventory) {
             infoLabel.setText("Aucun animal en stock ! Visitez la boutique.");
-            infoLabel.setStyle("-fx-text-fill: #e74c3c;");
+            infoLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+        } else {
+            infoLabel.setText("Choisissez un animal à placer dans l'enclos :");
+            infoLabel.setStyle("-fx-text-fill: #ecf0f1;");
         }
     }
 
-    private HBox createAnimalRow(AnimalType type, int qty) {
+    private HBox createAnimalRow(AnimalType type, int qty, int playerLevel) {
         HBox row = new HBox(15);
-        row.setStyle("-fx-background-color: #34495e; -fx-padding: 10; -fx-background-radius: 10;");
-        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: #34495e; -fx-padding: 10; -fx-background-radius: 10; -fx-alignment: CENTER_LEFT;");
 
         Label label = new Label(type.getName() + " (x" + qty + ")");
-        label.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
+        label.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14;");
 
         Pane spacer = new Pane();
         HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 
-        Button placeBtn = new Button("PLACER");
-        placeBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-cursor: hand;");
+        Button placeBtn = new Button();
+        boolean levelReached = playerLevel >= type.getRequiredLevel();
 
-        placeBtn.setOnAction(e -> {
-            if (inventory.useAnimal(type)) {
-                targetEnclosure.addAnimal(type);
-                if (mainController != null) mainController.refreshInventoryUI();
-                handleClose();
-            }
-        });
+        if (levelReached) {
+            placeBtn.setText("PLACER");
+            placeBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;");
+            placeBtn.setOnAction(e -> {
+                if (inventory.useAnimal(type)) {
+
+                    targetEnclosure.addAnimal(type);
+
+                    if (mainController != null) {
+                        mainController.refreshInventoryUI();
+                    }
+                    handleClose();
+                }
+            });
+        } else {
+            placeBtn.setText("NIV. " + type.getRequiredLevel() + " REQUIS");
+            placeBtn.setDisable(true);
+            placeBtn.setStyle("-fx-background-color: #7f8c8d; -fx-text-fill: #bdc3c7; -fx-font-weight: bold;");
+            row.setOpacity(0.7);
+        }
 
         row.getChildren().addAll(label, spacer, placeBtn);
         return row;
     }
 
     @FXML private void handleClose() {
-        ((Stage) animalContainer.getScene().getWindow()).close();
+        if (animalContainer.getScene() != null) {
+            ((Stage) animalContainer.getScene().getWindow()).close();
+        }
     }
 }

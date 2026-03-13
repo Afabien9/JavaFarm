@@ -2,72 +2,56 @@ package main.java.model;
 
 import javafx.beans.property.*;
 
-/**
- * Modèle représentant un enclos pour animaux.
- * Gère l'état de production, la faim de l'animal et le type d'animal présent.
- */
 public class Enclosure {
 
-    // Propriétés JavaFX pour permettre le "Binding" et les "Listeners"
-    private final ObjectProperty<AnimalType> currentAnimal = new SimpleObjectProperty<>(null);
+    private final ObjectProperty<Animal> currentAnimal = new SimpleObjectProperty<>(null);
     private final ObjectProperty<PlotState> state = new SimpleObjectProperty<>(PlotState.EMPTY);
-    private final BooleanProperty isHungry = new SimpleBooleanProperty(false);
-    private final IntegerProperty growthStage = new SimpleIntegerProperty(0);
     private final DoubleProperty productionProgress = new SimpleDoubleProperty(0.0);
 
     public Enclosure() {
-        // Initialisation par défaut : l'enclos est vide au départ.
     }
 
-    // --- LOGIQUE MÉTIER ---
+    public void setAnimal(Animal animal) {
+        this.currentAnimal.set(animal);
+        if (animal != null) {
+            this.state.set(PlotState.GROWING);
+        } else {
+            this.state.set(PlotState.EMPTY);
+        }
+    }
 
-    /**
-     * Ajoute un animal dans l'enclos.
-     * Déclenche automatiquement l'état de croissance et la faim.
-     */
     public void addAnimal(AnimalType type) {
         if (type != null) {
-            this.currentAnimal.set(type);
+            Animal animal = new Animal(type);
+            this.currentAnimal.set(animal);
             this.state.set(PlotState.GROWING);
-            this.isHungry.set(true); // L'animal attend d'être nourri pour produire
-            this.growthStage.set(0);
             this.productionProgress.set(0.0);
             System.out.println("[ENCLOSURE] " + type.getName() + " ajouté.");
         }
     }
 
-    /**
-     * Vide l'enclos et réinitialise les statistiques.
-     */
     public void clearEnclosure() {
         this.currentAnimal.set(null);
         this.state.set(PlotState.EMPTY);
-        this.isHungry.set(false);
         this.productionProgress.set(0.0);
     }
 
-    /**
-     * Appelé après la récolte d'un produit animal.
-     * Remet l'animal en attente de nourriture.
-     */
     public void collectProduct() {
         if (this.state.get() == PlotState.READY) {
-            this.state.set(PlotState.GROWING);
-            this.isHungry.set(true); // Redevient affamé après avoir produit
-            this.productionProgress.set(0.0);
+            Animal animal = currentAnimal.get();
+            if (animal != null) {
+                animal.resetProduction();
+                this.state.set(PlotState.GROWING);
+                this.productionProgress.set(0.0);
+            }
         }
     }
 
-    // --- GETTERS ET PROPERTIES (Indispensables pour MapController) ---
-
-    /**
-     * Permet au MapController d'écouter les changements d'animal pour l'emoji.
-     */
-    public ObjectProperty<AnimalType> currentAnimalProperty() {
+    public ObjectProperty<Animal> currentAnimalProperty() {
         return currentAnimal;
     }
 
-    public AnimalType getCurrentAnimal() {
+    public Animal getCurrentAnimal() {
         return currentAnimal.get();
     }
 
@@ -79,28 +63,8 @@ public class Enclosure {
         return state.get();
     }
 
-    public BooleanProperty isHungryProperty() {
-        return isHungry;
-    }
-
     public boolean isHungry() {
-        return isHungry.get();
-    }
-
-    public void setHungry(boolean hungry) {
-        this.isHungry.set(hungry);
-    }
-
-    public IntegerProperty growthStageProperty() {
-        return growthStage;
-    }
-
-    public int getGrowthStage() {
-        return growthStage.get();
-    }
-
-    public void setGrowthStage(int stage) {
-        this.growthStage.set(stage);
+        return currentAnimal.get() != null && currentAnimal.get().isHungry();
     }
 
     public DoubleProperty productionProgressProperty() {
@@ -115,19 +79,28 @@ public class Enclosure {
         this.productionProgress.set(progress);
     }
 
+    public BooleanProperty isHungryProperty() {
+        if (currentAnimal.get() != null) {
+            return currentAnimal.get().isHungryProperty();
+        }
+        return new SimpleBooleanProperty(false);
+    }
+
+    public int getVisualStage() {
+        Animal animal = currentAnimal.get();
+        if (animal == null) return 1;
+        if (animal.isHungry()) return 1;
+        if (animal.isReadyToProduce()) return 3;
+        return 2;
+    }
+
     public void startProductionAfterFeeding() {
-        if (this.currentAnimal.get() != null && this.isHungry.get()) {
-            // 1. L'animal n'a plus faim
-            this.isHungry.set(false);
-
-            // 2. On réinitialise la progression
+        Animal animal = currentAnimal.get();
+        if (animal != null && animal.isHungry()) {
+            animal.feed();
             this.productionProgress.set(0.0);
-            this.growthStage.set(0);
-
-            // 3. On s'assure que l'état est bien GROWING (en production)
             this.state.set(PlotState.GROWING);
-
-            System.out.println("[ENCLOSURE] " + currentAnimal.get().getName() + " commence à produire !");
+            System.out.println("[ENCLOSURE] " + animal.getName() + " commence à produire !");
         }
     }
 }

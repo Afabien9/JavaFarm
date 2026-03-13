@@ -55,7 +55,7 @@ public class PlantationController {
         row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         row.setStyle("-fx-background-color: #34495e; -fx-padding: 10; -fx-background-radius: 10; -fx-border-color: #7f8c8d; -fx-border-radius: 10;");
 
-        // Vérification du niveau
+
         int playerLevel = LevelService.getInstance().getCurrentLevel();
         boolean isLocked = playerLevel < type.getMinLevel();
 

@@ -23,7 +23,7 @@ public class BuildService {
             Plot newPlot = new Plot(false);
             GameService.getInstance().getAllPlots().add(newPlot);
 
-            // On crée le visuel ici pour le placement libre
+
             Rectangle rect = new Rectangle(80, 80, Color.BROWN);
             rect.setX(x);
             rect.setY(y);

@@ -20,20 +20,17 @@ public class AnimalProductionService {
             AnimalType type = animal.getType();
             Inventory inventory = GameService.getInstance().getInventory();
 
-            // On ajoute le produit (Lait, Oeuf, etc.) à l'inventaire
-            // Note : Tu peux créer des types de produits spécifiques dans ton Inventory plus tard
+
             System.out.println("Récolté : " + type.getProduct() + " de " + type.getName());
 
-            // Gain immédiat ou stockage selon ton choix (ici gain immédiat pour simplifier)
+
             GameService.getInstance().getWallet().addMoney(type.getProductValue());
         } else {
             System.out.println("L'animal a trop faim pour produire !");
         }
     }
 
-    /**
-     * Nourrit l'animal en consommant de l'argent (coût de nourriture).
-     */
+
     public boolean feedAnimal(Animal animal) {
         Wallet wallet = GameService.getInstance().getWallet();
         int cost = animal.getType().getFoodCost();

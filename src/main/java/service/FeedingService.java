@@ -14,13 +14,13 @@ public class FeedingService {
         if (enclosure.getCurrentAnimal() == null || !enclosure.isHungryProperty().get()) return false;
 
         Inventory inv = GameService.getInstance().getInventory();
-        AnimalType type = enclosure.getCurrentAnimal();
+        AnimalType type = enclosure.getCurrentAnimal().getType();
         boolean success = false;
 
         switch (type) {
             case CHICKEN:
                 // Les poules mangent des graines (Wheat)
-                success = inv.useSeed(CropType.WHEAT);
+                success = inv.useSeed(CropType.WHEAT, 1);
                 break;
             case SHEEP:
                 // Les moutons mangent du Blé récolté

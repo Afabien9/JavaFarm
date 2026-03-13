@@ -29,7 +29,6 @@ public class ShopController {
         if (seedsListView == null) return;
         seedsListView.getItems().setAll(CropType.values());
 
-        // Récupère le niveau actuel du joueur
         int currentLevel = LevelService.getInstance().getCurrentLevel();
 
         seedsListView.setCellFactory(lv -> new ListCell<CropType>() {
@@ -45,8 +44,8 @@ public class ShopController {
 
                     if (isLocked) {
                         setText("🔒 " + item.getName() + " [NIV. " + item.getMinLevel() + " REQUIS]");
-                        setDisable(true); // Empêche la sélection
-                        setStyle("-fx-text-fill: #7f8c8d; -fx-font-style: italic;"); // Apparence grisée
+                        setDisable(true);
+                        setStyle("-fx-text-fill: #e74c3c; -fx-font-style: italic; -fx-opacity: 0.7;");
                     } else {
                         setText(getCropEmoji(item.getName()) + " " + item.getName() + " (" + item.getBuyPrice() + " €)");
                         setDisable(false);
@@ -61,15 +60,29 @@ public class ShopController {
         if (animalsListView == null) return;
         animalsListView.getItems().setAll(AnimalType.values());
 
-        // On pourrait aussi ajouter des niveaux aux animaux plus tard
+        int currentLevel = LevelService.getInstance().getCurrentLevel();
+
         animalsListView.setCellFactory(lv -> new ListCell<AnimalType>() {
             @Override
             protected void updateItem(AnimalType item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
+                    setDisable(false);
+                    setStyle("");
                 } else {
-                    setText(getAnimalEmoji(item.getName()) + " " + item.getName() + " (" + item.getBuyPrice() + " €)");
+
+                    boolean isLocked = currentLevel < item.getRequiredLevel();
+
+                    if (isLocked) {
+                        setText("🔒 " + item.getName() + " [NIV. " + item.getRequiredLevel() + " REQUIS]");
+                        setDisable(true);
+                        setStyle("-fx-text-fill: #e74c3c; -fx-font-style: italic; -fx-opacity: 0.7;");
+                    } else {
+                        setText(getAnimalEmoji(item.getName()) + " " + item.getName() + " (" + item.getBuyPrice() + " €)");
+                        setDisable(false);
+                        setStyle("-fx-text-fill: #2c3e50; -fx-font-weight: bold;");
+                    }
                 }
             }
         });
@@ -97,18 +110,21 @@ public class ShopController {
     @FXML
     public void handleBuy(ActionEvent event) {
         Object selected = seedsListView.getSelectionModel().getSelectedItem();
+        boolean fromSeeds = true;
+
         if (selected == null) {
             selected = animalsListView.getSelectionModel().getSelectedItem();
+            fromSeeds = false;
         }
 
         if (selected != null) {
-            // Sécurité supplémentaire : On vérifie le niveau avant d'appeler le GameService
-            if (selected instanceof CropType) {
-                CropType crop = (CropType) selected;
-                if (LevelService.getInstance().getCurrentLevel() < crop.getMinLevel()) {
-                    System.out.println("Niveau insuffisant !");
-                    return;
-                }
+            int currentLevel = LevelService.getInstance().getCurrentLevel();
+
+
+            if (fromSeeds) {
+                if (currentLevel < ((CropType) selected).getMinLevel()) return;
+            } else {
+                if (currentLevel < ((AnimalType) selected).getRequiredLevel()) return;
             }
 
             if (GameService.getInstance().buy(selected)) {

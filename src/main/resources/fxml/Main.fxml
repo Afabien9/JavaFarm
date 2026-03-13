@@ -9,7 +9,6 @@
     <HBox>
         <VBox style="-fx-background-color: #2c3e50;">
             <fx:include fx:id="sidebar" source="SidebarView.fxml" VBox.vgrow="ALWAYS" />
-            <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
         </VBox>
 
         <ScrollPane fx:id="mapScroll" HBox.hgrow="ALWAYS" fitToHeight="true" fitToWidth="true"
@@ -18,26 +17,20 @@
         </ScrollPane>
     </HBox>
 
+    <Pane fx:id="modeOverlay" mouseTransparent="true" />
+
     <VBox alignment="BOTTOM_CENTER" pickOnBounds="false">
         <HBox fx:id="buildToolbar" spacing="25" alignment="CENTER" visible="false"
-              style="-fx-background-color: #f5e6b5; -fx-background-radius: 40; -fx-padding: 20; -fx-border-color: #3e2723; -fx-border-width: 3; -fx-border-radius: 40; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 15, 0, 0, 10);">
-            <Button text="🚜 CHAMP" onAction="#handleModePlots"
-                    style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 10 25; -fx-font-weight: bold;"/>
-            <Button text="🏠 ENCLOS" onAction="#handleModeEnclosures"
-                    style="-fx-background-color: #90a4ae; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 10 25; -fx-font-weight: bold;"/>
-            <Button text="❌ FERMER" onAction="#toggleBuildMode"
-                    style="-fx-background-color: #f4511e; -fx-text-fill: white; -fx-background-radius: 20; -fx-padding: 10 25; -fx-font-weight: bold;"/>
+              style="-fx-background-color: #f5e6b5; -fx-background-radius: 40; -fx-padding: 20; -fx-border-color: #3e2723; -fx-border-width: 3; -fx-border-radius: 40;">
+            <Button text="🚜 CHAMP" onAction="#handleModePlots" style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-font-weight: bold;"/>
+            <Button text="🏠 ENCLOS" onAction="#handleModeEnclosures" style="-fx-background-color: #90a4ae; -fx-text-fill: white; -fx-font-weight: bold;"/>
+            <Button text="❌ FERMER" onAction="#toggleBuildMode" style="-fx-background-color: #f4511e; -fx-text-fill: white; -fx-font-weight: bold;"/>
         </HBox>
         <StackPane.margin><Insets bottom="40"/></StackPane.margin>
     </VBox>
 
-    <Pane fx:id="modeOverlay" mouseTransparent="true"
-          style="-fx-border-width: 12; -fx-border-color: transparent; -fx-background-color: transparent;"/>
-
     <VBox alignment="TOP_RIGHT" pickOnBounds="false">
         <padding><Insets top="20" right="20"/></padding>
-        <Label fx:id="statusLabel" text="MODE INTERACTION"
-               style="-fx-background-color: rgba(0,0,0,0.5); -fx-text-fill: white; -fx-padding: 10 20; -fx-background-radius: 10; -fx-font-weight: bold;"/>
+        <Label fx:id="statusLabel" text="MODE INTERACTION" style="-fx-background-color: rgba(0,0,0,0.5); -fx-text-fill: white; -fx-padding: 10 20; -fx-background-radius: 10; -fx-font-weight: bold;"/>
     </VBox>
-
 </StackPane>

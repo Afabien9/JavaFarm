@@ -1,9 +1,6 @@
 package main.java.model;
 
-/**
- * RÉSOUT L'ERREUR : class WeatherType
- * Définit les types de météo possibles pour le jeu.
- */
+
 public enum WeatherType {
     SUNNY("Soleil", "#FFD700"),
     RAINY("Pluie", "#4682B4"),

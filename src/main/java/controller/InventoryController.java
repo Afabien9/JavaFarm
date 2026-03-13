@@ -12,7 +12,7 @@ import main.java.model.*;
 
 public class InventoryController {
 
-    @FXML private FlowPane itemsGrid; // Utilise un FlowPane pour une grille fluide
+    @FXML private FlowPane itemsGrid;
     @FXML private Label titleLabel;
 
     private Inventory inventory;
@@ -27,22 +27,22 @@ public class InventoryController {
     private void refreshUI() {
         itemsGrid.getChildren().clear();
 
-        // 1. Affichage des Graines
+
         inventory.getSeeds().forEach((type, qty) -> {
             if (qty > 0) itemsGrid.getChildren().add(createItemCard(type.getName(), qty, "🌱", "#2ecc71"));
         });
 
-        // 2. Affichage des Animaux en stock
+
         inventory.getAnimals().forEach((type, qty) -> {
             if (qty > 0) itemsGrid.getChildren().add(createItemCard(type.getName(), qty, getAnimalEmoji(type.getName()), "#3498db"));
         });
 
-        // 3. Affichage des Récoltes
+
         inventory.getProducts().forEach((type, qty) -> {
             if (qty > 0) itemsGrid.getChildren().add(createItemCard(type.getName(), qty, "📦", "#f1c40f"));
         });
 
-        // 4. Produits animaux
+
         inventory.getAnimalProducts().forEach((name, qty) -> {
             if (qty > 0) itemsGrid.getChildren().add(createItemCard(name, qty, "✨", "#9b59b6"));
         });

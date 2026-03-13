@@ -7,7 +7,7 @@ import javafx.beans.property.SimpleObjectProperty;
 public class SelectionManager {
     private static SelectionManager instance;
 
-    // Par défaut, on sélectionne le Blé
+
     private final ObjectProperty<CropType> selectedCrop = new SimpleObjectProperty<>(CropType.WHEAT);
 
     private SelectionManager() {}

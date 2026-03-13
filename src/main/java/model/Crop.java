@@ -9,7 +9,7 @@ public class Crop {
     private final int sellPrice;
     private CropType type;
 
-    // Nouveau constructeur pour accepter CropType
+
     public Crop(CropType type) {
         this.type = type;
         this.name = type.getName();

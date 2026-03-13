@@ -1,0 +1,17 @@
+#JavaFarm Save Data
+#Fri Mar 13 10:27:17 CET 2026
+animal_Oeuf=0
+money=2053
+prod_CABBAGE=0
+prod_CARROT=0
+prod_CORN=0
+prod_WHEAT=0
+seed_CABBAGE=0
+seed_CARROT=0
+seed_CORN=0
+seed_WHEAT=10
+struct_0=150_675_enclosure\:CHICKEN
+struct_1=150_450_plot
+struct_2=225_675_enclosure
+struct_3=300_675_enclosure
+struct_count=4

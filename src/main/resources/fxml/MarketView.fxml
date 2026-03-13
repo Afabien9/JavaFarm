@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox spacing="20" prefWidth="500" style="-fx-background-color: #2c3e50; -fx-padding: 25; -fx-border-color: #e67e22; -fx-border-width: 4; -fx-background-radius: 15; -fx-border-radius: 15;" xmlns:fx="http://javafx.com/fxml" fx:controller="main.java.controller.MarketController">
+
+    <HBox alignment="CENTER_LEFT" spacing="15">
+        <Label text="🏪 MARCHÉ" style="-fx-text-fill: #e67e22; -fx-font-size: 24; -fx-font-weight: bold;"/>
+        <Region HBox.hgrow="ALWAYS" />
+        <Label fx:id="marketWalletLabel" text="0 €" style="-fx-text-fill: #f1c40f; -fx-font-weight: bold; -fx-font-size: 18;"/>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" prefHeight="350" style="-fx-background-color: transparent; -fx-background: transparent;">
+        <VBox fx:id="marketContainer" spacing="10" />
+    </ScrollPane>
+
+    <HBox spacing="15" alignment="CENTER">
+        <Button text="FERMER LE MARCHÉ" onAction="#handleClose" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 10; -fx-cursor: hand;"/>
+    </HBox>
+</VBox>

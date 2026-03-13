@@ -2,6 +2,8 @@ package main.java.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import main.java.model.Animal; // Import indispensable
+import main.java.model.AnimalType;
 import main.java.model.Enclosure;
 import main.java.service.FeedingService;
 
@@ -16,13 +18,17 @@ public class AnimalInteractionController {
     public void setEnclosure(Enclosure enc) {
         this.enclosure = enc;
 
-        String animalName = enc.getCurrentAnimal().getName();
-        animalNameLabel.setText(getAnimalEmoji(animalName) + " " + animalName);
 
-        String food = switch(enc.getCurrentAnimal()) {
-            case CHICKEN -> "Graines de Blé";
-            case COW -> "Maïs récolté";
-            case SHEEP -> "Blé récolté";
+        Animal animal = enc.getCurrentAnimal();
+        if (animal == null) return;
+
+        animalNameLabel.setText(getAnimalEmoji(animal.getName()) + " " + animal.getName());
+
+
+        String food = switch(animal.getType()) {
+            case CHICKEN -> "Blé récolté";
+            case COW -> "Chou récolté";
+            case SHEEP -> "Maïs récolté";
             default -> "Nourriture";
         };
 
@@ -31,7 +37,8 @@ public class AnimalInteractionController {
     }
 
     private void updateUI() {
-        boolean hungry = enclosure.isHungryProperty().get();
+
+        boolean hungry = enclosure.getCurrentAnimal() != null && enclosure.getCurrentAnimal().isHungry();
         statusLabel.setText(hungry ? "État : 😋 Affamé" : "État : ✨ En production...");
         feedButton.setDisable(!hungry);
     }
@@ -47,6 +54,7 @@ public class AnimalInteractionController {
 
     @FXML
     private void handleFeed() {
+
         if (FeedingService.getInstance().tryFeed(enclosure)) {
             updateUI();
         } else {

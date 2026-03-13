@@ -4,7 +4,7 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
-import main.java.model.WeatherType; // Import de l'énumération
+import main.java.model.WeatherType;
 import java.util.Random;
 
 public class WeatherManager {
@@ -29,7 +29,7 @@ public class WeatherManager {
         WeatherType[] types = WeatherType.values();
         this.currentWeather = types[random.nextInt(types.length)];
         if (mainCtrl != null) {
-            // On envoie l'objet WeatherType complet au lieu d'un String
+
             mainCtrl.updateWeatherUI(String.valueOf(currentWeather));
         }
     }

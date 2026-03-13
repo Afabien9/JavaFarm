@@ -1,15 +1,22 @@
 package main.java.controller;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.paint.Color;
+import javafx.geometry.Pos;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.shape.Rectangle;
 import main.java.model.*;
 import main.java.service.GameService;
 import main.java.service.LevelService;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MapController {
 
@@ -17,12 +24,36 @@ public class MapController {
     private MainController mainController;
     private Inventory inventory;
 
-    private final int CELL_SIZE = 80;
-    private final int GAP = 2;
+    private final int CELL_SIZE = 70;
+    private final int GAP = 5;
     private final int GRID_STEP = CELL_SIZE + GAP;
 
     private int currentPlotCount = 0;
     private int currentEnclosureCount = 0;
+    private final Set<String> occupiedPositions = new HashSet<>();
+    private final Map<String, Enclosure> enclosureMap = new HashMap<>();
+
+    private Image terreImage;
+    private Image enclosImage;
+
+    @FXML
+    public void initialize() {
+        this.terreImage = loadImage("terre");
+        this.enclosImage = loadImage("enclos");
+    }
+
+    private Image loadImage(String name) {
+        try {
+            String[] extensions = {".png", ".jpg"};
+            for (String ext : extensions) {
+                var stream = getClass().getResourceAsStream("/images/" + name + ext);
+                if (stream != null) return new Image(stream);
+            }
+        } catch (Exception e) {
+            System.err.println("[ERREUR] Image introuvable : " + name);
+        }
+        return null;
+    }
 
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
@@ -32,198 +63,244 @@ public class MapController {
         this.inventory = inventory;
     }
 
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+
+    private boolean showConfirmation(String title, String header, String content) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        return alert.showAndWait().filter(r -> r == ButtonType.OK).isPresent();
+    }
+
     @FXML
     private void handleLocalMapClick(MouseEvent event) {
         if (mainController != null && mainController.isBuildModeActive()) {
+            double snapX = Math.floor(event.getX() / GRID_STEP) * GRID_STEP;
+            double snapY = Math.floor(event.getY() / GRID_STEP) * GRID_STEP;
+
             if (mainController.getActiveStructureType() == MainController.StructureType.PLOT) {
-                placeNewPlot(event.getX(), event.getY());
+                placeNewPlot(snapX, snapY);
             } else if (mainController.getActiveStructureType() == MainController.StructureType.ENCLOSURE) {
-                placeNewEnclosure(event.getX(), event.getY());
+                placeNewEnclosure(snapX, snapY);
             }
         }
     }
 
     public void placeNewPlot(double x, double y) {
-        int max = LevelService.getInstance().getMaxPlots();
-        if (currentPlotCount >= max) {
-            System.out.println("[LIMIT] Max parcelles atteint (" + max + ").");
+        if (isAreaOccupied(x, y)) return;
+
+        int maxPlots = LevelService.getInstance().getMaxPlots();
+        if (currentPlotCount >= maxPlots) {
+            showAlert("Limite atteinte", "Niveau actuel : max " + maxPlots + " parcelles.");
             return;
         }
 
-        int price = GameService.getInstance().getPlotPrice();
+        int price = GameService.getInstance().getNextPlotPrice(currentPlotCount);
         if (GameService.getInstance().getWallet().getMoney() < price) {
-            System.out.println("[ECONOMY] Pas assez d'argent (" + price + "€ requis).");
+            showAlert("Pas assez d'argent", "Il vous faut " + price + " €.");
             return;
         }
+
+        if (!showConfirmation("Achat", "Nouvelle parcelle", "Coût : " + price + " €")) return;
 
         GameService.getInstance().getWallet().spendMoney(price);
-        currentPlotCount++;
-        mainController.updateStatusLabel();
+        loadPlot(x, y);
+    }
 
-        double snapX = Math.floor(x / GRID_STEP) * GRID_STEP;
-        double snapY = Math.floor(y / GRID_STEP) * GRID_STEP;
+    public void loadPlot(double x, double y) {
+        String posKey = (int)x + "_" + (int)y + "_plot";
+        occupiedPositions.add(posKey);
+        currentPlotCount++;
+        if (mainController != null) mainController.updateStatusLabel();
 
         Plot plotModel = new Plot(false);
-        Rectangle rect = new Rectangle(CELL_SIZE, CELL_SIZE, Color.BROWN);
-        rect.setX(snapX);
-        rect.setY(snapY);
-        rect.setStroke(Color.BLACK);
-        rect.setArcWidth(10);
-        rect.setArcHeight(10);
+        StackPane container = createBaseContainer(x, y);
 
-        rect.setOnMouseClicked(event -> {
+        ImageView plotView = new ImageView();
+        plotView.setFitWidth(CELL_SIZE);
+        plotView.setFitHeight(CELL_SIZE);
+        plotView.setPreserveRatio(true);
+
+        container.getChildren().add(plotView);
+        updatePlotVisual(plotModel, plotView, 0);
+
+        container.setOnMouseClicked(event -> {
             if (mainController.isDestructionModeActive()) {
-                mapPane.getChildren().remove(rect);
+                mapPane.getChildren().remove(container);
+                occupiedPositions.remove(posKey);
                 currentPlotCount--;
-                GameService.getInstance().refundStructure(true);
                 mainController.updateStatusLabel();
+                event.consume();
             } else if (!mainController.isBuildModeActive()) {
-                handlePlotInteraction(plotModel);
+                handlePlotInteraction(plotModel, plotView);
                 event.consume();
             }
         });
 
-        plotModel.stateProperty().addListener((obs, oldState, newState) -> {
-            updatePlotVisual(plotModel, rect, plotModel.growthStageProperty().get());
-        });
+        plotModel.growthStageProperty().addListener((obs, old, newS) -> updatePlotVisual(plotModel, plotView, newS.intValue()));
+        plotModel.stateProperty().addListener((obs, old, newS) -> updatePlotVisual(plotModel, plotView, plotModel.getGrowthStage()));
 
-        plotModel.growthStageProperty().addListener((obs, oldStage, newStage) -> {
-            updatePlotVisual(plotModel, rect, newStage.intValue());
-        });
-
-        mapPane.getChildren().add(rect);
+        mapPane.getChildren().add(container);
     }
 
-    private void handlePlotInteraction(Plot plot) {
+    public void placeNewEnclosure(double x, double y) {
+        if (isAreaOccupied(x, y)) return;
+
+        int maxEnclosures = LevelService.getInstance().getMaxEnclosures();
+        if (currentEnclosureCount >= maxEnclosures) {
+            showAlert("Limite atteinte", "Niveau actuel : max " + maxEnclosures + " enclos.");
+            return;
+        }
+
+        int price = GameService.getInstance().getNextEnclosurePrice(currentEnclosureCount);
+        if (GameService.getInstance().getWallet().getMoney() < price) {
+            showAlert("Pas assez d'argent", "Il vous faut " + price + " €.");
+            return;
+        }
+
+        if (!showConfirmation("Construction", "Nouvel Enclos", "Coût : " + price + " €")) return;
+
+        GameService.getInstance().getWallet().spendMoney(price);
+        loadEnclosure(x, y, null);
+    }
+
+    public void loadEnclosure(double x, double y, String animalType) {
+        String posKey = (int)x + "_" + (int)y + "_enclosure";
+        occupiedPositions.add(posKey);
+        currentEnclosureCount++;
+
+        Enclosure enclosureModel = new Enclosure();
+        enclosureMap.put(posKey, enclosureModel);
+
+        if (animalType != null && !animalType.isEmpty()) {
+            try {
+                AnimalType type = AnimalType.valueOf(animalType.toUpperCase());
+                enclosureModel.setAnimal(new Animal(type));
+            } catch (Exception e) {
+                System.err.println("Erreur chargement animal: " + animalType);
+            }
+        }
+
+        GameService.getInstance().registerEnclosure(enclosureModel);
+        if (mainController != null) mainController.updateStatusLabel();
+
+        StackPane container = createBaseContainer(x, y);
+        ImageView bgView = new ImageView(enclosImage != null ? enclosImage : terreImage);
+        bgView.setFitWidth(CELL_SIZE);
+        bgView.setFitHeight(CELL_SIZE);
+
+        ImageView animalView = new ImageView();
+        animalView.setFitWidth(CELL_SIZE * 0.8);
+        animalView.setFitHeight(CELL_SIZE * 0.8);
+        animalView.setPreserveRatio(true);
+        animalView.setMouseTransparent(true);
+
+        Label stateLabel = new Label("");
+        stateLabel.setStyle("-fx-font-size: 16; -fx-background-color: rgba(255,255,255,0.7); -fx-background-radius: 5;");
+        StackPane.setAlignment(stateLabel, Pos.TOP_RIGHT);
+
+        enclosureModel.currentAnimalProperty().addListener((obs, old, newA) -> {
+            Platform.runLater(() -> updateEnclosureVisual(enclosureModel, animalView, stateLabel));
+            if (newA != null) {
+                newA.isHungryProperty().addListener((o, ol, h) -> Platform.runLater(() -> updateEnclosureVisual(enclosureModel, animalView, stateLabel)));
+                newA.isReadyToProduceProperty().addListener((o, ol, r) -> Platform.runLater(() -> updateEnclosureVisual(enclosureModel, animalView, stateLabel)));
+            }
+        });
+
+        if (enclosureModel.getCurrentAnimal() != null) {
+            updateEnclosureVisual(enclosureModel, animalView, stateLabel);
+        }
+
+        container.getChildren().addAll(bgView, animalView, stateLabel);
+
+        container.setOnMouseClicked(event -> {
+            if (mainController.isDestructionModeActive()) {
+                mapPane.getChildren().remove(container);
+                occupiedPositions.remove(posKey);
+                enclosureMap.remove(posKey);
+                currentEnclosureCount--;
+                mainController.updateStatusLabel();
+                event.consume();
+            } else if (!mainController.isBuildModeActive()) {
+                if (enclosureModel.getCurrentAnimal() == null) {
+                    mainController.openAnimalPlacementMenu(enclosureModel);
+                } else {
+                    mainController.handleAnimalInteraction(enclosureModel);
+                }
+                event.consume();
+            }
+        });
+
+        mapPane.getChildren().add(container);
+    }
+
+    public String getAnimalAt(String posKey) {
+        Enclosure enc = enclosureMap.get(posKey);
+        if (enc != null && enc.getCurrentAnimal() != null) {
+            return enc.getCurrentAnimal().getType().name();
+        }
+        return null;
+    }
+
+    private boolean isAreaOccupied(double x, double y) {
+        String base = (int)x + "_" + (int)y;
+        return occupiedPositions.contains(base + "_plot") || occupiedPositions.contains(base + "_enclosure");
+    }
+
+    private StackPane createBaseContainer(double x, double y) {
+        StackPane container = new StackPane();
+        container.setLayoutX(x);
+        container.setLayoutY(y);
+        container.setPrefSize(CELL_SIZE, CELL_SIZE);
+        container.setAlignment(Pos.CENTER);
+        Rectangle mask = new Rectangle(CELL_SIZE, CELL_SIZE);
+        mask.setArcWidth(20); mask.setArcHeight(20);
+        container.setClip(mask);
+        return container;
+    }
+
+    private void updateEnclosureVisual(Enclosure enclosure, ImageView animalView, Label stateLabel) {
+        Animal animal = enclosure.getCurrentAnimal();
+        if (animal == null) {
+            animalView.setImage(null);
+            stateLabel.setText("");
+            return;
+        }
+        int stage = animal.isReadyToProduce() ? 3 : (!animal.isHungry() ? 2 : 1);
+        stateLabel.setText(animal.isReadyToProduce() ? "📦" : (!animal.isHungry() ? "⏳" : "🍴"));
+        animalView.setImage(loadImage(animal.getType().getName().toLowerCase() + stage));
+    }
+
+    private void updatePlotVisual(Plot plot, ImageView view, int stage) {
+        if (plot.getState() == PlotState.EMPTY) {
+            view.setImage(terreImage);
+        } else {
+            String baseName = plot.getCurrentCrop().getType().getName().toLowerCase().replace("é", "e").replace("ï", "i").replace("tte", "te");
+            if (baseName.equals("ble")) baseName = "Ble";
+            view.setImage(loadImage(baseName + Math.min(stage + 1, 3)));
+        }
+    }
+
+    private void handlePlotInteraction(Plot plot, ImageView view) {
         if (plot.getState() == PlotState.EMPTY) {
             mainController.openPlantingMenu(plot);
         } else if (plot.getState() == PlotState.READY) {
             GameService.getInstance().harvestPlot(plot);
+            plot.setState(PlotState.EMPTY);
+            plot.setGrowthStage(0);
+            updatePlotVisual(plot, view, 0);
             mainController.refreshInventoryUI();
         }
     }
 
-    private void updatePlotVisual(Plot plot, Rectangle rect, int stage) {
-        if (plot.getState() == PlotState.EMPTY) {
-            rect.setFill(Color.BROWN);
-            return;
-        }
-        switch (stage) {
-            case 0: rect.setFill(Color.CORNFLOWERBLUE); break;
-            case 1: rect.setFill(Color.LIMEGREEN); break;
-            case 2:
-                if (plot.getCurrentCrop() != null && plot.getCurrentCrop().getType() != null) {
-                    rect.setFill(plot.getCurrentCrop().getType().getReadyColor());
-                } else {
-                    rect.setFill(Color.GOLD);
-                }
-                break;
-        }
-    }
-
-    public void placeNewEnclosure(double x, double y) {
-        int max = LevelService.getInstance().getMaxEnclosures();
-        if (currentEnclosureCount >= max) {
-            System.out.println("[LIMIT] Max enclos atteint (" + max + ").");
-            return;
-        }
-
-        int price = GameService.getInstance().getEnclosurePrice();
-        if (GameService.getInstance().getWallet().getMoney() < price) return;
-
-        GameService.getInstance().getWallet().spendMoney(price);
-        currentEnclosureCount++;
-        mainController.updateStatusLabel();
-
-        double snapX = Math.floor(x / GRID_STEP) * GRID_STEP;
-        double snapY = Math.floor(y / GRID_STEP) * GRID_STEP;
-
-        Enclosure enclosureModel = new Enclosure();
-        StackPane stack = new StackPane();
-        stack.setLayoutX(snapX);
-        stack.setLayoutY(snapY);
-
-        Rectangle rect = new Rectangle(CELL_SIZE, CELL_SIZE, Color.web("#bdc3c7"));
-        rect.setArcWidth(20);
-        rect.setArcHeight(20);
-        rect.setStroke(Color.web("#7f8c8d"));
-        rect.setStrokeWidth(2);
-
-        Label emojiLabel = new Label("");
-        emojiLabel.setStyle("-fx-font-size: 35;");
-
-        enclosureModel.currentAnimalProperty().addListener((obs, oldAnimal, newAnimal) -> {
-            if (newAnimal != null) {
-                emojiLabel.setText(getAnimalEmoji(newAnimal.getName()));
-            } else {
-                emojiLabel.setText("");
-            }
-        });
-
-        stack.getChildren().addAll(rect, emojiLabel);
-
-        stack.setOnMouseClicked(event -> {
-            if (mainController.isDestructionModeActive()) {
-                mapPane.getChildren().remove(stack);
-                currentEnclosureCount--;
-                GameService.getInstance().refundStructure(false);
-                mainController.updateStatusLabel();
-            } else if (!mainController.isBuildModeActive()) {
-                handleEnclosureInteraction(enclosureModel, rect);
-                event.consume();
-            }
-        });
-
-        enclosureModel.stateProperty().addListener((obs, old, newState) -> {
-            if (newState == PlotState.READY) {
-                rect.setStroke(Color.GOLD);
-                rect.setStrokeWidth(4);
-            } else {
-                rect.setStroke(Color.web("#7f8c8d"));
-                rect.setStrokeWidth(2);
-            }
-        });
-
-        mapPane.getChildren().add(stack);
-    }
-
-    private void handleEnclosureInteraction(Enclosure enc, Rectangle rect) {
-        if (enc.getState() == PlotState.EMPTY) {
-            mainController.openAnimalPlacementMenu(enc);
-        } else if (enc.getState() == PlotState.READY) {
-            GameService.getInstance().collectFromEnclosure(enc);
-            mainController.refreshInventoryUI();
-        } else {
-            openAnimalInterface(enc);
-        }
-    }
-
-    private String getAnimalEmoji(String name) {
-        if (name == null) return "";
-        String n = name.toLowerCase();
-        if (n.contains("poule")) return "🐔";
-        if (n.contains("vache")) return "🐄";
-        if (n.contains("mouton")) return "🐑";
-        if (n.contains("cochon")) return "🐷";
-        return "🐾";
-    }
-
-    private void openAnimalInterface(Enclosure enc) {
-        try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/AnimalInteractionView.fxml"));
-            javafx.scene.Parent root = loader.load();
-            AnimalInteractionController ctrl = loader.getController();
-            ctrl.setEnclosure(enc);
-
-            javafx.stage.Stage stage = new javafx.stage.Stage();
-            stage.initStyle(javafx.stage.StageStyle.UNDECORATED);
-            stage.setScene(new javafx.scene.Scene(root));
-            stage.show();
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
-        }
-    }
-
+    public Set<String> getOccupiedPositions() { return occupiedPositions; }
     public int getCurrentPlotCount() { return currentPlotCount; }
     public int getCurrentEnclosureCount() { return currentEnclosureCount; }
 }

@@ -10,7 +10,7 @@ public enum UpgradeType {
     private final int price;
     private final String description;
     private final double multiplier;
-    private final int minLevel; // Niveau requis pour l'achat
+    private final int minLevel;
 
     UpgradeType(String name, int price, String description, double multiplier, int minLevel) {
         this.name = name;

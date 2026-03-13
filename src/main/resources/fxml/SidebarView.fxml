@@ -3,70 +3,60 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox fx:id="sidebarRoot" spacing="15" prefWidth="900" styleClass="sidebar"
+<VBox fx:id="sidebarRoot" spacing="20" prefWidth="900" styleClass="sidebar"
       xmlns:fx="http://javafx.com/fxml" fx:controller="main.java.controller.SidebarController"
       style="-fx-background-color: #2c3e50; -fx-border-color: #1a252f; -fx-border-width: 0 0 0 4;">
 
     <padding>
-        <Insets top="20" right="15" bottom="20" left="15"/>
+        <Insets top="25" right="20" bottom="25" left="20"/>
     </padding>
 
-    <VBox spacing="10" alignment="CENTER">
+    <VBox spacing="10" alignment="CENTER" style="-fx-background-color: rgba(0,0,0,0.2); -fx-padding: 15; -fx-background-radius: 15;">
         <Label fx:id="walletLabel" text="0 €"
-               style="-fx-background-color: #3e2723; -fx-text-fill: #f1c40f; -fx-padding: 8 20; -fx-background-radius: 20; -fx-font-size: 24; -fx-font-weight: bold; -fx-border-color: #f1c40f; -fx-border-radius: 20;"/>
-        <Label fx:id="weatherLabel" text="MÉTÉO : ENSOLEILLÉ"
-               style="-fx-text-fill: #ecf0f1; -fx-font-weight: bold; -fx-font-size: 12;"/>
+               style="-fx-text-fill: #f1c40f; -fx-font-size: 26; -fx-font-weight: bold;"/>
+        <Label fx:id="weatherLabel" text="SOLEIL"
+               style="-fx-text-fill: #3498db; -fx-font-weight: bold; -fx-font-size: 12; -fx-letter-spacing: 2;"/>
     </VBox>
 
-    <VBox spacing="5" alignment="CENTER" style="-fx-background-color: #34495e; -fx-padding: 10; -fx-background-radius: 15;">
-        <HBox spacing="10" alignment="CENTER">
-            <Label text="NIVEAU" style="-fx-text-fill: #bdc3c7; -fx-font-weight: bold; -fx-font-size: 11;"/>
-            <Label fx:id="levelLabel" text="1" style="-fx-text-fill: #3498db; -fx-font-weight: bold; -fx-font-size: 18;"/>
+    <VBox spacing="5" style="-fx-background-color: rgba(255,255,255,0.05); -fx-padding: 10; -fx-background-radius: 10;">
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Label text="NIVEAU" style="-fx-text-fill: #bdc3c7; -fx-font-size: 10; -fx-font-weight: bold;"/>
+            <Label fx:id="levelLabel" text="1" style="-fx-text-fill: #2ecc71; -fx-font-size: 18; -fx-font-weight: bold;"/>
         </HBox>
-        <ProgressBar fx:id="xpBar" progress="0.0" maxWidth="Infinity" prefHeight="12" style="-fx-accent: #3498db;"/>
-        <Label fx:id="xpLabel" text="0 / 100 XP" style="-fx-text-fill: #ecf0f1; -fx-font-size: 10;"/>
-
-        <Button fx:id="debugXpBtn" text="+50 XP (DEBUG)" onAction="#handleDebugAddXP"
-                visible="false" managed="false" maxWidth="Infinity"
-                style="-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-size: 10; -fx-font-weight: bold; -fx-margin-top: 5;"/>
+        <ProgressBar fx:id="xpBar" progress="0.0" maxWidth="Infinity" prefHeight="10"
+                     style="-fx-accent: #2ecc71;"/>
+        <Label fx:id="xpLabel" text="0 / 100 XP" style="-fx-text-fill: #7f8c8d; -fx-font-size: 10;"/>
     </VBox>
 
-    <Separator opacity="0.3"/>
+    <Separator opacity="0.2"/>
 
-    <VBox spacing="10">
-        <Label text="OUTILS DE FERME" style="-fx-font-weight: bold; -fx-text-fill: #ecf0f1; -fx-font-size: 13;"/>
-        <HBox spacing="8">
-            <Button text="🟫 TERRE" onAction="#handleModePlots" HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                    style="-fx-background-color: #8b4513; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11;"/>
-            <Button text="⬜ ENCLOS" onAction="#handleModeEnclosures" HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                    style="-fx-background-color: #7f8c8d; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11;"/>
-        </HBox>
-        <ToggleButton fx:id="buildToggle" text="🔨 MODE ÉDITION (B)" onAction="#handleToggleBuild" maxWidth="Infinity"
-                      style="-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10;"/>
-        <Button text="🗑️ DÉTRUIRE (X)" onAction="#handleToggleDestruction" maxWidth="Infinity"
-                style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 10;"/>
-    </VBox>
+    <VBox spacing="15" VBox.vgrow="ALWAYS">
+        <Label text="GESTION" style="-fx-font-weight: bold; -fx-text-fill: #bdc3c7; -fx-font-size: 11; -fx-letter-spacing: 1;"/>
 
-    <Separator opacity="0.3"/>
-
-    <VBox spacing="12" VBox.vgrow="ALWAYS">
-        <Label text="NAVIGATION" style="-fx-font-weight: bold; -fx-text-fill: #ecf0f1; -fx-font-size: 13;"/>
-
-        <Button text="📦 OUVRIR MA GRANGE" onAction="#handleOpenInventory" maxWidth="Infinity"
-                style="-fx-background-color: #8d6e63; -fx-text-fill: white; -fx-font-size: 15; -fx-padding: 15; -fx-background-radius: 12; -fx-font-weight: bold; -fx-cursor: hand;"/>
+        <Button text="📦 MA GRANGE" onAction="#handleOpenInventory" maxWidth="Infinity"
+                style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12; -fx-background-radius: 10; -fx-font-weight: bold; -fx-cursor: hand;"/>
 
         <Button text="🛒 BOUTIQUE" onAction="#handleOpenShop" maxWidth="Infinity"
-                style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12; -fx-background-radius: 12; -fx-font-weight: bold;"/>
+                style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12; -fx-background-radius: 10; -fx-font-weight: bold; -fx-cursor: hand;"/>
 
         <Button text="🛠 AMÉLIORATIONS" onAction="#handleOpenUpgrades" maxWidth="Infinity"
-                style="-fx-background-color: #f1c40f; -fx-text-fill: #2c3e50; -fx-font-size: 14; -fx-padding: 12; -fx-background-radius: 12; -fx-font-weight: bold;"/>
+                style="-fx-background-color: #f1c40f; -fx-text-fill: #2c3e50; -fx-font-size: 14; -fx-padding: 12; -fx-background-radius: 10; -fx-font-weight: bold; -fx-cursor: hand;"/>
+
+        <Button fx:id="debugXpBtn" text="⚙️ ADD XP (DEBUG)" onAction="#handleDebugAddXP" maxWidth="Infinity"
+                style="-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-font-size: 11; -fx-border-color: #7f8c8d; -fx-border-radius: 5; -fx-cursor: hand;"/>
+        <Button text="❓ AIDE TOUCHES" onAction="#handleOpenHelp" maxWidth="Infinity"
+                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-cursor: hand;"/>
+        <Button text="🏪 MARCHÉ LOCAL" onAction="#handleOpenMarket" maxWidth="Infinity"
+                style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12; -fx-background-radius: 10; -fx-cursor: hand;"/>
     </VBox>
 
-    <Separator opacity="0.3"/>
+    <Separator opacity="0.2"/>
 
-    <VBox alignment="BOTTOM_CENTER">
+    <VBox alignment="BOTTOM_CENTER" spacing="10">
         <Button text="💰 TOUT VENDRE" onAction="#handleSellAll" maxWidth="Infinity"
-                style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-font-size: 16; -fx-padding: 15; -fx-background-radius: 15; -fx-font-weight: bold;"/>
+                style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-font-size: 16; -fx-padding: 15; -fx-background-radius: 12; -fx-font-weight: bold; -fx-cursor: hand;"/>
+
+        <Label text="Version 1.0.4 - Alpha" style="-fx-text-fill: #5d6d7e; -fx-font-size: 9;"/>
     </VBox>
 
 </VBox>
